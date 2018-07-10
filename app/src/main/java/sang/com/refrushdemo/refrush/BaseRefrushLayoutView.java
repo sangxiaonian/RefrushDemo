@@ -50,7 +50,6 @@ public class BaseRefrushLayoutView extends ViewGroup {
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         mNestedScrollingChildHelper = new NestedScrollingChildHelper(this);
-        helper=new NoninvasiveHoveringStyleHelper(this);
     }
 
     @Override

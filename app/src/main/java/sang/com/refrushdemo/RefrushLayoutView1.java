@@ -141,7 +141,7 @@ public class RefrushLayoutView1 extends ViewGroup implements NestedScrollingPare
 
     private void initView(Context context, AttributeSet attrs) {
 
-        helper = new NoninvasiveHoveringStyleHelper(this);
+        helper = new NoninvasiveHoveringStyleHelper(context,this);
         animationToStart = new AnimationToStart()
                 .addInterpolator(mDecelerateInterpolator)
                 .addDuration(ANIMATE_TO_START_DURATION)
@@ -209,7 +209,7 @@ public class RefrushLayoutView1 extends ViewGroup implements NestedScrollingPare
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
         mOriginalOffsetTop = mCurrentTargetOffsetTop - topSize;
 
-        topRefrushView = helper.getRefrushView(context);
+        topRefrushView = helper.getRefrushView( );
         addView(topRefrushView);
     }
 
