@@ -1,26 +1,24 @@
 package sang.com.refrushdemo;
 
 import android.content.Context;
-import android.support.v4.view.NestedScrollingChild;
-import android.support.v4.view.NestedScrollingChildHelper;
-import android.support.v4.view.NestedScrollingParent;
 import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ListView;
 
 import sang.com.refrushdemo.inter.DefaultAnimationListenerIml;
 import sang.com.refrushdemo.inter.OnRefreshListener;
-import sang.com.refrushdemo.refrush.helper.NoninvasiveHoveringStyleHelper;
+import sang.com.refrushdemo.refrush.BaseRefrushLayout;
+import sang.com.refrushdemo.refrush.NoninvasiveHoveringHelper;
 import sang.com.refrushdemo.refrush.helper.animation.AnimationToStart;
+import sang.com.refrushdemo.refrush.inter.IRefrushHelper;
 import sang.com.refrushdemo.utils.JLog;
 
 import static android.support.v4.widget.ViewDragHelper.INVALID_POINTER;
@@ -29,9 +27,11 @@ import static android.support.v4.widget.ViewDragHelper.INVALID_POINTER;
  * 作者： ${PING} on 2018/6/22.
  */
 
-public class RefrushLayoutView extends ViewGroup implements NestedScrollingParent, NestedScrollingChild {
+public class RefrushLayoutView extends BaseRefrushLayout {
 
-    NoninvasiveHoveringStyleHelper helper;
+
+    private IRefrushHelper helper;
+
 
     /**
      * 目标View，通常为recycleView，listView等被刷新的控件
@@ -46,18 +46,12 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
     private boolean invasive = true;
 
 
-    //默认情况下，控件应该停止滑动开始刷新的位置
-    private static final int DEFAULT_CIRCLE_TARGET = 64;
-    private static final int DEFAULT_TOP_SIZE = 40;
-
     private NestedScrollingParentHelper mNestedScrollingParentHelper;
-    private NestedScrollingChildHelper mNestedScrollingChildHelper;
-
 
     /**
-     * 刷新控件大小
+     * 头部刷新控件移动距离
      */
-    private int topSize;
+    private int mCurrentTargetOffsetTop;
 
 
     //触发正在刷新或者取消刷新时候，头部刷新控件正在原始位置
@@ -67,9 +61,13 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
 
     //
 
+    //原始高度
+    private int mOriginalOffsetTop;
 
     //触摸滑动时候的滑动比例
     private float DRAG_RATE = 0.5f;
+    //拖拽的总共距离
+    private int mTotalDragDistance;
 
     private String LOG_TAG = "XRefrush";
 
@@ -107,7 +105,8 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
 
     private void initView(Context context, AttributeSet attrs) {
 
-        helper = new NoninvasiveHoveringStyleHelper(context, this);
+        helper = new NoninvasiveHoveringHelper();
+
         animationToStart = new AnimationToStart()
                 .addInterpolator(mDecelerateInterpolator)
                 .addDuration(ANIMATE_TO_START_DURATION)
@@ -121,21 +120,21 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
                     @Override
                     public void onAnimationUpdate(float animatedFraction, float animatedValue) {
                         int targetTop = 0;
-                        targetTop = (mFrom + (int) ((helper.getmOriginalOffsetTop() - mFrom) * animatedFraction));
+                        targetTop = (mFrom + (int) ((mOriginalOffsetTop - mFrom) * animatedFraction));
                         int offset = targetTop - topRefrushView.getTop();
-                        helper.changView(offset);
+                        setTargetOffsetTopAndBottom(offset);
                     }
 
                     @Override
                     public void onAnimationEnd() {
                         super.onAnimationEnd();
                         topRefrushView.setVisibility(View.GONE);
-                        helper.changView(helper.getmOriginalOffsetTop() - helper.getmCurrentTargetOffsetTop());
-                        helper.setmCurrentTargetOffsetTop(mTarget.getTop());
+                        setTargetOffsetTopAndBottom(mOriginalOffsetTop - mCurrentTargetOffsetTop);
+                        mCurrentTargetOffsetTop = mTarget.getTop();
                         mReturningToStart = false;
                     }
                 })
-                .addIntValues(helper.getmCurrentTargetOffsetTop(), mFrom)
+                .addIntValues(mCurrentTargetOffsetTop, mFrom)
         ;
         animationToRefrush = new AnimationToStart()
                 .addInterpolator(mDecelerateInterpolator)
@@ -146,10 +145,13 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
                     public void onAnimationUpdate(float animatedFraction, float animatedValue) {
                         int targetTop = 0;
                         int endTarget = 0;
-                        endTarget = helper.getmTotalDragDistance();
+
+                        endTarget = mTotalDragDistance;
+
                         targetTop = (mFrom + (int) ((endTarget - mFrom) * animatedFraction));
                         int offset = targetTop - topRefrushView.getTop();
-                        helper.changView(offset);
+
+                        setTargetOffsetTopAndBottom(offset);
                     }
 
                     @Override
@@ -159,20 +161,29 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
                                 mListener.onRefresh();
                             }
                         }
-                        helper.setmCurrentTargetOffsetTop(topRefrushView.getTop());
+                        mCurrentTargetOffsetTop = topRefrushView.getTop();
+
                     }
                 })
-                .addIntValues(helper.getmCurrentTargetOffsetTop(), helper.getmTotalDragDistance())
+                .addIntValues(mCurrentTargetOffsetTop, mTotalDragDistance)
         ;
 
-        final DisplayMetrics metrics = getResources().getDisplayMetrics();
+
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
-        mNestedScrollingChildHelper = new NestedScrollingChildHelper(this);
+
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        topSize = (int) (DEFAULT_TOP_SIZE * metrics.density);
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
-        topRefrushView = helper.getRefrushView();
+        topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
         addView(topRefrushView);
+        topRefrushView.post(new Runnable() {
+            @Override
+            public void run() {
+                mTotalDragDistance = (int) (topRefrushView.getMeasuredHeight() * 1.6f);
+                mOriginalOffsetTop = mCurrentTargetOffsetTop - topRefrushView.getMeasuredHeight();
+            }
+        });
+
+
     }
 
 
@@ -222,8 +233,8 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
         int circleWidth = topRefrushView.getMeasuredWidth();
         int circleHeight = topRefrushView.getMeasuredHeight();
-        topRefrushView.layout((width / 2 - circleWidth / 2), helper.getmCurrentTargetOffsetTop(),
-                (width / 2 + circleWidth / 2), helper.getmCurrentTargetOffsetTop() + circleHeight);
+        topRefrushView.layout((width / 2 - circleWidth / 2), mCurrentTargetOffsetTop,
+                (width / 2 + circleWidth / 2), mCurrentTargetOffsetTop + circleHeight);
         JLog.i("--------------------onLayout-------------");
 
     }
@@ -252,6 +263,23 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         }
     }
 
+    /**
+     * 唯一的子控件是否可以继续滑动
+     *
+     * @param direction -1 ，可以向上滑动 1 向下滑动
+     * @return true 表示可以滑动 false 表示不可以
+     */
+    public boolean canChildScrollUp(int direction) {
+
+        if (mTarget instanceof ListView) {
+            return ListViewCompat.canScrollList((ListView) mTarget, -1);
+        }
+        return mTarget.canScrollVertically(-1);
+    }
+
+    public boolean canChildScrollUp() {
+        return canChildScrollUp(1) && canChildScrollUp(-1);
+    }
 
     //触摸点ID
     private int mActivePointerId;
@@ -273,7 +301,7 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
             mReturningToStart = false;
         }
         //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
-        if (!isEnabled() || mReturningToStart || helper.canChildScrollUp(mTarget)
+        if (!isEnabled() || mReturningToStart || canChildScrollUp()
                 || mRefreshing || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
@@ -282,7 +310,9 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                helper.changView(helper.getmOriginalOffsetTop() - topRefrushView.getTop());
+
+                mCurrentTargetOffsetTop = helper.resetMove(topRefrushView);
+
                 mActivePointerId = ev.getPointerId(0);
                 mIsBeingDragged = false;
 
@@ -309,7 +339,12 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
                 if (mIsBeingDragged) {
                     final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
                     if (overscrollTop > 0) { //如果是向下滑动
-                        helper.moveSpinner(overscrollTop);
+//                        moveSpinner(overscrollTop);
+                        float targetY = helper.moveSpinner(mTotalDragDistance, mOriginalOffsetTop, overscrollTop);
+                        if (topRefrushView.getVisibility() != View.VISIBLE) {
+                            topRefrushView.setVisibility(View.VISIBLE);
+                        }
+                        mCurrentTargetOffsetTop = helper.changeViewByMove((int) (targetY - mCurrentTargetOffsetTop), topRefrushView);
                     } else {
                         return false;
                     }
@@ -353,7 +388,7 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
     }
 
     private void finishSpinner(float overscrollTop) {
-        if (overscrollTop > helper.getmTotalDragDistance()) {
+        if (overscrollTop > mTotalDragDistance) {
             //开始刷新动画
             setRefreshing(true);
         } else {
@@ -365,14 +400,14 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
     public void finishRefrush() {
         mRefreshing = false;
         //取消刷新动画
-        animateOffsetToStartPosition(helper.getmCurrentTargetOffsetTop());
+        animateOffsetToStartPosition(mCurrentTargetOffsetTop);
     }
 
 
     private void setRefreshing(boolean refreshing) {
         if (refreshing && mRefreshing != refreshing) {
             entryTargetView();
-            animateOffsetToCorrectPosition(helper.getmCurrentTargetOffsetTop());
+            animateOffsetToCorrectPosition(mCurrentTargetOffsetTop);
             mRefreshing = refreshing;
         }
     }
@@ -385,14 +420,15 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
     private void animateOffsetToCorrectPosition(int from) {
         mFrom = from;
         animationToRefrush.reset();
-        animationToRefrush.addIntValues(from, helper.getmOriginalOffsetTop());
+        animationToRefrush.addIntValues(from, mOriginalOffsetTop);
         animationToRefrush.start();
+
     }
 
     private void animateOffsetToStartPosition(int from) {
         mFrom = from;
         animationToStart.reset();
-        animationToStart.addIntValues(from, helper.getmOriginalOffsetTop());
+        animationToStart.addIntValues(from, mOriginalOffsetTop);
         animationToStart.start();
     }
 
@@ -400,13 +436,39 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         final int pointerIndex = ev.getActionIndex();
         final int pointerId = ev.getPointerId(pointerIndex);
         if (pointerId == mActivePointerId) {
-            // This was our active pointer going up. Choose a new
-            // active pointer and adjust accordingly.
             final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
             mActivePointerId = ev.getPointerId(newPointerIndex);
         }
     }
 
+    /**
+     * 开始进行滑动
+     *
+     * @param overscrollTop
+     */
+    private void moveSpinner(float overscrollTop) {
+        //拖拽距离到最大距离的百分比
+        float originalDragPercent = overscrollTop / mTotalDragDistance;
+        //确定百分比
+        float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
+        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
+        float extraOS = Math.abs(overscrollTop) - mTotalDragDistance;
+        //弹性距离
+        float slingshotDist = mTotalDragDistance;
+        float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
+                / slingshotDist);
+        float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
+                (tensionSlingshotPercent / 4), 2)) * 2f;
+
+        float extraMove = (slingshotDist) * tensionPercent * 2;
+
+        int targetY = mOriginalOffsetTop + (int) ((slingshotDist * dragPercent) + extraMove);
+
+        if (topRefrushView.getVisibility() != View.VISIBLE) {
+            topRefrushView.setVisibility(View.VISIBLE);
+        }
+        setTargetOffsetTopAndBottom(targetY - mCurrentTargetOffsetTop);
+    }
 
     /**
      * 开始数值方向拖拽
@@ -419,6 +481,18 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
             mInitialMotionY = mInitialDownY + mTouchSlop;
             mIsBeingDragged = true;
         }
+    }
+
+
+    /**
+     * 将头布局位移指定距离
+     *
+     * @param offset
+     */
+    private void setTargetOffsetTopAndBottom(int offset) {
+        topRefrushView.bringToFront();
+        ViewCompat.offsetTopAndBottom(topRefrushView, offset);
+        mCurrentTargetOffsetTop = topRefrushView.getTop();
     }
 
 
@@ -457,7 +531,7 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
                 mTotalUnconsumed -= dy;
                 consumed[1] = dy;
             }
-            helper.moveSpinner(mTotalUnconsumed);
+            moveSpinner(mTotalUnconsumed);
         }
 
         final int[] parentConsumed = mParentScrollConsumed;
@@ -499,72 +573,11 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         // 'offset in window 'functionality to see if we have been moved from the event.
         // This is a decent indication of whether we should take over the event stream or not.
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
-        if (dy < 0 && !helper.canChildScrollUp(mTarget)) {
+        if (dy < 0 && !canChildScrollUp()) {
             mTotalUnconsumed += Math.abs(dy);
-            helper.moveSpinner(mTotalUnconsumed);
+            moveSpinner(mTotalUnconsumed);
         }
     }
 
-    // NestedScrollingChild
-
-    @Override
-    public void setNestedScrollingEnabled(boolean enabled) {
-        mNestedScrollingChildHelper.setNestedScrollingEnabled(enabled);
-    }
-
-    @Override
-    public boolean isNestedScrollingEnabled() {
-        return mNestedScrollingChildHelper.isNestedScrollingEnabled();
-    }
-
-    @Override
-    public boolean startNestedScroll(int axes) {
-        return mNestedScrollingChildHelper.startNestedScroll(axes);
-    }
-
-    @Override
-    public void stopNestedScroll() {
-        mNestedScrollingChildHelper.stopNestedScroll();
-    }
-
-    @Override
-    public boolean hasNestedScrollingParent() {
-        return mNestedScrollingChildHelper.hasNestedScrollingParent();
-    }
-
-    @Override
-    public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed,
-                                        int dyUnconsumed, int[] offsetInWindow) {
-        return mNestedScrollingChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed,
-                dxUnconsumed, dyUnconsumed, offsetInWindow);
-    }
-
-    @Override
-    public boolean dispatchNestedPreScroll(int dx, int dy, int[] consumed, int[] offsetInWindow) {
-        return mNestedScrollingChildHelper.dispatchNestedPreScroll(
-                dx, dy, consumed, offsetInWindow);
-    }
-
-    @Override
-    public boolean onNestedPreFling(View target, float velocityX,
-                                    float velocityY) {
-        return dispatchNestedPreFling(velocityX, velocityY);
-    }
-
-    @Override
-    public boolean onNestedFling(View target, float velocityX, float velocityY,
-                                 boolean consumed) {
-        return dispatchNestedFling(velocityX, velocityY, consumed);
-    }
-
-    @Override
-    public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {
-        return mNestedScrollingChildHelper.dispatchNestedFling(velocityX, velocityY, consumed);
-    }
-
-    @Override
-    public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
-        return mNestedScrollingChildHelper.dispatchNestedPreFling(velocityX, velocityY);
-    }
 
 }

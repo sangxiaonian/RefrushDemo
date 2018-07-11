@@ -16,12 +16,13 @@ import sang.com.refrushdemo.refrush.inter.IRefrushHelper;
  * 非侵入式悬浮下拉刷新控件
  */
 
-public class NoninvasiveHoveringStyleHelper implements IRefrushHelper{
+public class NoninvasiveHoveringStyleHelper  {
 
     private final ViewGroup parent;
     private Context context;
     private View refrushView;
     private final float DRAG_RATE = 1.6f;
+
     //拖拽的总共距离
     private int mTotalDragDistance;
 
