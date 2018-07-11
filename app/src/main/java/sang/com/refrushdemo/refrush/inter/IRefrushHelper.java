@@ -5,7 +5,7 @@ package sang.com.refrushdemo.refrush.inter;
  * 刷新控件的风格
  */
 
-public interface IRefrushStyle{
+public interface IRefrushHelper {
 
 
 }

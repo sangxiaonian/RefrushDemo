@@ -9,13 +9,14 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import sang.com.refrushdemo.R;
+import sang.com.refrushdemo.refrush.inter.IRefrushHelper;
 
 /**
  * 作者： ${PING} on 2018/7/10.
  * 非侵入式悬浮下拉刷新控件
  */
 
-public class NoninvasiveHoveringStyleHelper {
+public class NoninvasiveHoveringStyleHelper implements IRefrushHelper{
 
     private final ViewGroup parent;
     private Context context;
@@ -72,10 +73,10 @@ public class NoninvasiveHoveringStyleHelper {
      * @param direction -1 ，可以向上滑动 1 向下滑动
      * @return true 表示可以滑动 false 表示不可以
      */
-    public boolean canChildScrollUp(int direction, View mTarget) {
+    public boolean canChildScroll(int direction, View mTarget) {
 
         if (mTarget instanceof ListView) {
-            return ListViewCompat.canScrollList((ListView) mTarget, -1);
+            return ListViewCompat.canScrollList((ListView) mTarget, direction);
         }
         return mTarget.canScrollVertically(direction);
     }
@@ -90,7 +91,7 @@ public class NoninvasiveHoveringStyleHelper {
     }
 
     public boolean canChildScrollUp(View mTarget) {
-        return canChildScrollUp(-1, mTarget);
+        return canChildScroll(-1, mTarget);
     }
 
 
@@ -128,6 +129,5 @@ public class NoninvasiveHoveringStyleHelper {
         getRefrushView().bringToFront();
         ViewCompat.offsetTopAndBottom(getRefrushView(), offset);
         setmCurrentTargetOffsetTop(getRefrushView().getTop());
-
     }
 }

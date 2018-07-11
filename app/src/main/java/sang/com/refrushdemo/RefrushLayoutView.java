@@ -252,23 +252,6 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         }
     }
 
-    /**
-     * 唯一的子控件是否可以继续滑动
-     *
-     * @param direction -1 ，可以向上滑动 1 向下滑动
-     * @return true 表示可以滑动 false 表示不可以
-     */
-    public boolean canChildScrollUp(int direction) {
-
-        if (mTarget instanceof ListView) {
-            return ListViewCompat.canScrollList((ListView) mTarget, -1);
-        }
-        return mTarget.canScrollVertically(-1);
-    }
-
-    public boolean canChildScrollUp() {
-        return canChildScrollUp(1) && canChildScrollUp(-1);
-    }
 
     //触摸点ID
     private int mActivePointerId;
@@ -290,7 +273,7 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
             mReturningToStart = false;
         }
         //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()
+        if (!isEnabled() || mReturningToStart || helper.canChildScrollUp(mTarget)
                 || mRefreshing || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
@@ -404,7 +387,6 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         animationToRefrush.reset();
         animationToRefrush.addIntValues(from, helper.getmOriginalOffsetTop());
         animationToRefrush.start();
-
     }
 
     private void animateOffsetToStartPosition(int from) {
@@ -517,7 +499,7 @@ public class RefrushLayoutView extends ViewGroup implements NestedScrollingParen
         // 'offset in window 'functionality to see if we have been moved from the event.
         // This is a decent indication of whether we should take over the event stream or not.
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
-        if (dy < 0 && !canChildScrollUp()) {
+        if (dy < 0 && !helper.canChildScrollUp(mTarget)) {
             mTotalUnconsumed += Math.abs(dy);
             helper.moveSpinner(mTotalUnconsumed);
         }
