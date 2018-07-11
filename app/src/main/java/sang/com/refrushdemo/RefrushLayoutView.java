@@ -16,21 +16,15 @@ import android.widget.ListView;
 import sang.com.refrushdemo.inter.DefaultAnimationListenerIml;
 import sang.com.refrushdemo.inter.OnRefreshListener;
 import sang.com.refrushdemo.refrush.BaseRefrushLayout;
-import sang.com.refrushdemo.refrush.NoninvasiveHoveringHelper;
 import sang.com.refrushdemo.refrush.helper.animation.AnimationToStart;
-import sang.com.refrushdemo.refrush.inter.IRefrushHelper;
+import sang.com.refrushdemo.refrush.inter.IRefrushView;
 import sang.com.refrushdemo.utils.JLog;
-
-import static android.support.v4.widget.ViewDragHelper.INVALID_POINTER;
 
 /**
  * 作者： ${PING} on 2018/6/22.
  */
 
 public class RefrushLayoutView extends BaseRefrushLayout {
-
-
-    private IRefrushHelper helper;
 
 
     /**
@@ -51,7 +45,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     /**
      * 头部刷新控件移动距离
      */
-    private int mCurrentTargetOffsetTop;
+//    private int mCurrentTargetOffsetTop;
 
 
     //触发正在刷新或者取消刷新时候，头部刷新控件正在原始位置
@@ -61,20 +55,15 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
     //
 
-    //原始高度
-    private int mOriginalOffsetTop;
 
     //触摸滑动时候的滑动比例
     private float DRAG_RATE = 0.5f;
-    //拖拽的总共距离
-    private int mTotalDragDistance;
 
     private String LOG_TAG = "XRefrush";
 
     private OnRefreshListener mListener;
 
     //动画执行时间
-    private static final int ANIMATE_TO_TRIGGER_DURATION = 200;
     private static final int ANIMATE_TO_START_DURATION = 200;
 
     //减速差值器
@@ -82,12 +71,9 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
 
     private AnimationToStart animationToStart;
-    private AnimationToStart animationToRefrush;
 
-
-    //当前位置
-    private int mFrom;
     private DecelerateInterpolator mDecelerateInterpolator;
+    private IRefrushView refrushView;
 
 
     public RefrushLayoutView(Context context) {
@@ -104,9 +90,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     private void initView(Context context, AttributeSet attrs) {
-
-        helper = new NoninvasiveHoveringHelper();
-
         animationToStart = new AnimationToStart()
                 .addInterpolator(mDecelerateInterpolator)
                 .addDuration(ANIMATE_TO_START_DURATION)
@@ -119,53 +102,22 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
                     @Override
                     public void onAnimationUpdate(float animatedFraction, float animatedValue) {
-                        int targetTop = 0;
-                        targetTop = (mFrom + (int) ((mOriginalOffsetTop - mFrom) * animatedFraction));
-                        int offset = targetTop - topRefrushView.getTop();
-                        setTargetOffsetTopAndBottom(offset);
+                        refrushView.changValue(animatedValue - refrushView.getCurrentValue());
                     }
 
                     @Override
                     public void onAnimationEnd() {
                         super.onAnimationEnd();
-                        topRefrushView.setVisibility(View.GONE);
-                        setTargetOffsetTopAndBottom(mOriginalOffsetTop - mCurrentTargetOffsetTop);
-                        mCurrentTargetOffsetTop = mTarget.getTop();
-                        mReturningToStart = false;
-                    }
-                })
-                .addIntValues(mCurrentTargetOffsetTop, mFrom)
-        ;
-        animationToRefrush = new AnimationToStart()
-                .addInterpolator(mDecelerateInterpolator)
-                .addDuration(ANIMATE_TO_TRIGGER_DURATION)
-                .addListener(new DefaultAnimationListenerIml() {
-
-                    @Override
-                    public void onAnimationUpdate(float animatedFraction, float animatedValue) {
-                        int targetTop = 0;
-                        int endTarget = 0;
-
-                        endTarget = mTotalDragDistance;
-
-                        targetTop = (mFrom + (int) ((endTarget - mFrom) * animatedFraction));
-                        int offset = targetTop - topRefrushView.getTop();
-
-                        setTargetOffsetTopAndBottom(offset);
-                    }
-
-                    @Override
-                    public void onAnimationEnd() {
                         if (mRefreshing) {
                             if (mListener != null) {
                                 mListener.onRefresh();
                             }
+                        } else {
+                            refrushView.reset();
                         }
-                        mCurrentTargetOffsetTop = topRefrushView.getTop();
-
+                        mReturningToStart = false;
                     }
                 })
-                .addIntValues(mCurrentTargetOffsetTop, mTotalDragDistance)
         ;
 
 
@@ -175,13 +127,12 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
         topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
         addView(topRefrushView);
-        topRefrushView.post(new Runnable() {
-            @Override
-            public void run() {
-                mTotalDragDistance = (int) (topRefrushView.getMeasuredHeight() * 1.6f);
-                mOriginalOffsetTop = mCurrentTargetOffsetTop - topRefrushView.getMeasuredHeight();
-            }
-        });
+
+        // invasive=true;
+
+        if (topRefrushView instanceof IRefrushView) {
+            refrushView = (IRefrushView) topRefrushView;
+        }
 
 
     }
@@ -196,18 +147,16 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         if (mTarget == null) {//如果没有子控件，则直接返回，不再进行测量
             return;
         }
+        if (topRefrushView != null) {
+            measureChild(topRefrushView, widthMeasureSpec, heightMeasureSpec);
+        }
         int targetWidth = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
-        int targetHeight = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
+        int targetHeight = getMeasuredHeight() - getPaddingTop() - getPaddingBottom() - refrushView.getCurrentValue();
         //对子控件进行测量
         mTarget.measure(MeasureSpec.makeMeasureSpec(
                 targetWidth,
                 MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(
                 targetHeight, MeasureSpec.EXACTLY));
-        if (topRefrushView != null) {
-            measureChild(topRefrushView, widthMeasureSpec, heightMeasureSpec);
-        }
-
-        JLog.i("--------------------onMeasure-------------");
 
     }
 
@@ -224,19 +173,28 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         if (mTarget == null) {
             return;
         }
-        final View child = mTarget;
-        final int childLeft = getPaddingLeft();
-        final int childTop = getPaddingTop();
-        final int childWidth = width - getPaddingLeft() - getPaddingRight();
-        final int childHeight = height - getPaddingTop() - getPaddingBottom();
 
-        child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
         int circleWidth = topRefrushView.getMeasuredWidth();
         int circleHeight = topRefrushView.getMeasuredHeight();
-        topRefrushView.layout((width / 2 - circleWidth / 2), mCurrentTargetOffsetTop,
-                (width / 2 + circleWidth / 2), mCurrentTargetOffsetTop + circleHeight);
-        JLog.i("--------------------onLayout-------------");
+        topRefrushView.layout((width / 2 - circleWidth / 2), refrushView.getCurrentValue() + getPaddingTop(),
+                (width / 2 + circleWidth / 2), refrushView.getCurrentValue() + getPaddingTop() + circleHeight);
 
+
+        final View child = mTarget;
+
+        if (invasive) {
+            final int childLeft = getPaddingLeft();
+            final int childTop = topRefrushView.getBottom();
+            final int childWidth = width - getPaddingLeft() - getPaddingRight();
+            final int childHeight = height - getPaddingBottom();
+            child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
+        } else {
+            final int childLeft = getPaddingLeft();
+            final int childTop = getPaddingTop();
+            final int childWidth = width - getPaddingLeft() - getPaddingRight();
+            final int childHeight = height - getPaddingTop() - getPaddingBottom();
+            child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
+        }
     }
 
     /**
@@ -278,11 +236,9 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     public boolean canChildScrollUp() {
-        return canChildScrollUp(1) && canChildScrollUp(-1);
+        return canChildScrollUp(-1);
     }
 
-    //触摸点ID
-    private int mActivePointerId;
     //是否开始拖拽
     private boolean mIsBeingDragged;
     //触摸的位置
@@ -293,182 +249,80 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     private float mInitialMotionY;
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        JLog.e("----------------");
+        switch (ev.getAction()){
+
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+
+
+    @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
-        int pointerIndex = -1;
+
+        if ( mInitialDownY ==0){
+            mInitialDownY = ev.getRawY();
+        }
 
         if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
             mReturningToStart = false;
         }
+        JLog.i(canChildScrollUp() + ">>>");
         //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
         if (!isEnabled() || mReturningToStart || canChildScrollUp()
                 || mRefreshing || mNestedScrollInProgress) {
             // Fail fast if we're not in a state where a swipe is possible
             return false;
         }
-
-
-        switch (action) {
+        switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-
-                mCurrentTargetOffsetTop = helper.resetMove(topRefrushView);
-
-                mActivePointerId = ev.getPointerId(0);
+                refrushView.reset();
                 mIsBeingDragged = false;
 
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    return false;
-                }
-                mInitialDownY = ev.getY(pointerIndex);
+                mInitialDownY = ev.getRawY();
                 break;
 
             case MotionEvent.ACTION_MOVE: {
-                if (mActivePointerId == INVALID_POINTER) {
-                    JLog.e("Got ACTION_MOVE event but don't have an active pointer id.");
-                    return false;
-                }
 
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    return false;
-                }
-                final float y = ev.getY(pointerIndex);
+                final float y = ev.getRawY();
+
+                JLog.d("ACTION_MOVE:" + y);
+
                 startDragging(y);
 
                 if (mIsBeingDragged) {
                     final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
                     if (overscrollTop > 0) { //如果是向下滑动
-//                        moveSpinner(overscrollTop);
-                        float targetY = helper.moveSpinner(mTotalDragDistance, mOriginalOffsetTop, overscrollTop);
-                        if (topRefrushView.getVisibility() != View.VISIBLE) {
-                            topRefrushView.setVisibility(View.VISIBLE);
-                        }
-                        mCurrentTargetOffsetTop = helper.changeViewByMove((int) (targetY - mCurrentTargetOffsetTop), topRefrushView);
+                        refrushView.moveSpinner(overscrollTop);
+
                     } else {
                         return false;
                     }
                 }
                 break;
             }
-            case MotionEvent.ACTION_POINTER_DOWN: //另一个触摸点，则以此触摸点为主
-                pointerIndex = ev.getActionIndex();
-                if (pointerIndex < 0) {
-                    JLog.e(LOG_TAG,
-                            "Got ACTION_POINTER_DOWN event but have an invalid action index.");
-                    return false;
-                }
-                mActivePointerId = ev.getPointerId(pointerIndex);
-                break;
 
-            case MotionEvent.ACTION_POINTER_UP:
-                onSecondaryPointerUp(ev);
-                break;
-            case MotionEvent.ACTION_UP: {
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_UP event but don't have an active pointer id.");
-                    return false;
-                }
 
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+            {
                 if (mIsBeingDragged) {
-                    final float y = ev.getY(pointerIndex);
+                    final float y = ev.getRawY();
                     final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
                     mIsBeingDragged = false;
                     finishSpinner(overscrollTop);
                 }
-                mActivePointerId = INVALID_POINTER;
+                mInitialDownY = 0;
                 return false;
             }
-            case MotionEvent.ACTION_CANCEL:
-                return false;
         }
 
         return mIsBeingDragged;
     }
 
-    private void finishSpinner(float overscrollTop) {
-        if (overscrollTop > mTotalDragDistance) {
-            //开始刷新动画
-            setRefreshing(true);
-        } else {
-            //取消刷新动画
-            finishRefrush();
-        }
-    }
-
-    public void finishRefrush() {
-        mRefreshing = false;
-        //取消刷新动画
-        animateOffsetToStartPosition(mCurrentTargetOffsetTop);
-    }
-
-
-    private void setRefreshing(boolean refreshing) {
-        if (refreshing && mRefreshing != refreshing) {
-            entryTargetView();
-            animateOffsetToCorrectPosition(mCurrentTargetOffsetTop);
-            mRefreshing = refreshing;
-        }
-    }
-
-    /**
-     * 执行动画，移动到刷新位置
-     *
-     * @param from 开始的位置
-     */
-    private void animateOffsetToCorrectPosition(int from) {
-        mFrom = from;
-        animationToRefrush.reset();
-        animationToRefrush.addIntValues(from, mOriginalOffsetTop);
-        animationToRefrush.start();
-
-    }
-
-    private void animateOffsetToStartPosition(int from) {
-        mFrom = from;
-        animationToStart.reset();
-        animationToStart.addIntValues(from, mOriginalOffsetTop);
-        animationToStart.start();
-    }
-
-    private void onSecondaryPointerUp(MotionEvent ev) {
-        final int pointerIndex = ev.getActionIndex();
-        final int pointerId = ev.getPointerId(pointerIndex);
-        if (pointerId == mActivePointerId) {
-            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-            mActivePointerId = ev.getPointerId(newPointerIndex);
-        }
-    }
-
-    /**
-     * 开始进行滑动
-     *
-     * @param overscrollTop
-     */
-    private void moveSpinner(float overscrollTop) {
-        //拖拽距离到最大距离的百分比
-        float originalDragPercent = overscrollTop / mTotalDragDistance;
-        //确定百分比
-        float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
-        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
-        float extraOS = Math.abs(overscrollTop) - mTotalDragDistance;
-        //弹性距离
-        float slingshotDist = mTotalDragDistance;
-        float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
-                / slingshotDist);
-        float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
-                (tensionSlingshotPercent / 4), 2)) * 2f;
-
-        float extraMove = (slingshotDist) * tensionPercent * 2;
-
-        int targetY = mOriginalOffsetTop + (int) ((slingshotDist * dragPercent) + extraMove);
-
-        if (topRefrushView.getVisibility() != View.VISIBLE) {
-            topRefrushView.setVisibility(View.VISIBLE);
-        }
-        setTargetOffsetTopAndBottom(targetY - mCurrentTargetOffsetTop);
-    }
 
     /**
      * 开始数值方向拖拽
@@ -483,16 +337,47 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         }
     }
 
+    private void finishSpinner(float overscrollTop) {
+        if (overscrollTop > refrushView.getTotalDragDistance()) {
+            //开始刷新动画
+            setRefreshing(true);
+        } else {
+            //取消刷新动画
+            finishRefrush();
+        }
+    }
+
+    public void finishRefrush() {
+        mRefreshing = false;
+        //取消刷新动画
+        animateOffsetToStartPosition(refrushView.getCurrentValue());
+    }
+
+
+    private void setRefreshing(boolean refreshing) {
+        if (refreshing && mRefreshing != refreshing) {
+            entryTargetView();
+            animateOffsetToCorrectPosition(refrushView.getCurrentValue());
+            mRefreshing = refreshing;
+        }
+    }
 
     /**
-     * 将头布局位移指定距离
+     * 执行动画，移动到刷新位置
      *
-     * @param offset
+     * @param from 开始的位置
      */
-    private void setTargetOffsetTopAndBottom(int offset) {
-        topRefrushView.bringToFront();
-        ViewCompat.offsetTopAndBottom(topRefrushView, offset);
-        mCurrentTargetOffsetTop = topRefrushView.getTop();
+    private void animateOffsetToCorrectPosition(int from) {
+        animationToStart.reset();
+        animationToStart.addIntValues(from, refrushView.getTotalDragDistance());
+        animationToStart.start();
+
+    }
+
+    private void animateOffsetToStartPosition(int from) {
+        animationToStart.reset();
+        animationToStart.addIntValues(from, refrushView.getOriginalValue());
+        animationToStart.start();
     }
 
 
@@ -505,8 +390,9 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
-        return isEnabled() && !mReturningToStart && !mRefreshing
-                && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
+//        return isEnabled() && !mReturningToStart && !mRefreshing
+//                && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
+        return false;
     }
 
     @Override
@@ -523,6 +409,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
         // If we are in the middle of consuming, a scroll, then we want to move the spinner back up
         // before allowing the list to scroll
+        JLog.i(dy+">>>");
         if (dy > 0 && mTotalUnconsumed > 0) {
             if (dy > mTotalUnconsumed) {
                 consumed[1] = dy - (int) mTotalUnconsumed;
@@ -531,7 +418,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                 mTotalUnconsumed -= dy;
                 consumed[1] = dy;
             }
-            moveSpinner(mTotalUnconsumed);
+            refrushView.moveSpinner(mTotalUnconsumed);
         }
 
         final int[] parentConsumed = mParentScrollConsumed;
@@ -575,7 +462,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
         if (dy < 0 && !canChildScrollUp()) {
             mTotalUnconsumed += Math.abs(dy);
-            moveSpinner(mTotalUnconsumed);
+            refrushView.moveSpinner(mTotalUnconsumed);
         }
     }
 

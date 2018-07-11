@@ -9,8 +9,36 @@ public interface IRefrushView {
 
     /**
      * 根据传入的值，更改此时view的状态
-     * @param overscroll
+     * @param offset 此次操作造成的该变量
      */
-    void changValue(  float overscroll);
+    void changValue(  float offset);
 
+    /**
+     * 取消刷新，刷新成功等操作完成之后，恢复到初始状态
+     */
+    void reset();
+
+    /**
+     * 获取到View的初始状态值，一般为高度 或者Top值
+     * @return
+     */
+    int getOriginalValue();
+
+    /**
+     *
+     * @return 允许被拖拽的最大距离
+     */
+    int getTotalDragDistance();
+
+    /**
+     *
+     * @return View当前的状态值，一般为高度或者Top值
+     */
+    int getCurrentValue();
+
+    /**
+     * 手指滑动时候的处理
+     * @param overscrollTop 手指滑动的总距离
+     */
+    void moveSpinner(float overscrollTop);
 }
