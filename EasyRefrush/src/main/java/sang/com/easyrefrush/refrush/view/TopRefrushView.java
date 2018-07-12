@@ -6,7 +6,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -14,7 +13,6 @@ import sang.com.easyrefrush.refrushutils.JLog;
  */
 
 public class TopRefrushView extends BaseRefrushView implements IRefrushView {
-
 
 
     public TopRefrushView(Context context) {
@@ -33,6 +31,7 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
 
     }
+
     /**
      * 根据传入的值，更改此时view的状态
      *
@@ -40,11 +39,11 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public void changValue(float offset) {
-        JLog.i("----------------");
         bringToFront();
         helper.changValue(offset);
         requestLayout();
     }
+
     /**
      * 取消刷新，刷新成功等操作完成之后，恢复到初始状态
      */
@@ -62,12 +61,11 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public int moveSpinner(float overscrollTop) {
-        if (getVisibility()!=VISIBLE){
+        if (getVisibility() != VISIBLE) {
             setVisibility(VISIBLE);
         }
-        final int targetY = helper.moveSpinner(overscrollTop );
+        final int targetY = helper.moveSpinner(overscrollTop);
         int i = targetY - getCurrentValue();
-        JLog.i("==="+i);
         changValue(i);
         return targetY;
     }
@@ -88,7 +86,7 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public void animationToStart(int... value) {
-        animationHelper.animationToStart(getCurrentValue(),0);
+        animationHelper.animationToStart(getCurrentValue(), 0);
     }
 
     /**
@@ -98,7 +96,7 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public void animationToRefrush(int... value) {
-        animationHelper.animationToStart(getCurrentValue(),getTotalDragDistance());
+        animationHelper.animationToStart(getCurrentValue(), getTotalDragDistance());
     }
 
 }

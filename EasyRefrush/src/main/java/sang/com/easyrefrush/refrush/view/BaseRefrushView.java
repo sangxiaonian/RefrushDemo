@@ -16,7 +16,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
  * 作者： ${PING} on 2018/7/12.
  */
 
-public abstract class BaseRefrushView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
+  abstract class BaseRefrushView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
     protected IRefrushView helper;
     protected AnimationCollection.IAnimationHelper animationHelper;
 

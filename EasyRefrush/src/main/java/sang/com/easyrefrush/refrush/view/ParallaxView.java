@@ -3,9 +3,11 @@ package sang.com.easyrefrush.refrush.view;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -42,7 +44,13 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
     public void changValue(float offset) {
         bringToFront();
         helper.changValue(offset);
-        requestLayout();
+        ViewGroup.LayoutParams params = getLayoutParams();
+        params.height=getOriginalValue()+getCurrentValue();
+        if (params.height<0){
+            params.height=0;
+        }
+//        requestLayout();
+        JLog.i(getMeasuredHeight()+">>>");
     }
 
     /**
@@ -72,7 +80,7 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
         layout((parentWidth / 2 - circleWidth / 2), getPaddingTop(),
-                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop() + circleHeight);
+                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop() + getOriginalValue());
     }
 
     /**
