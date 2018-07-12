@@ -6,7 +6,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
 
+import sang.com.refrushdemo.refrush.helper.view.ViewHelper;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
+import sang.com.refrushdemo.utils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/11.
@@ -14,15 +16,10 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
 public class TopRefrushView extends RelativeLayout implements IRefrushView {
 
-    //原始高度
-    private int mOriginalOffsetTop;
-    //拖拽的总共距离
-    private int mTotalDragDistance;
-    /**
-     * 当前所在位置
-     */
-    private int mCurrentTargetOffsetTop;
 
+
+
+    private IRefrushView helper;
 
     public TopRefrushView(Context context) {
         this(context, null, 0);
@@ -38,11 +35,14 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
     }
 
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
+        helper = new ViewHelper();
         post(new Runnable() {
             @Override
             public void run() {
-                mTotalDragDistance = (int) (getMeasuredHeight() * 1.6f);
-                mOriginalOffsetTop = mCurrentTargetOffsetTop - getMeasuredHeight();
+                if (getTotalDragDistance()==0) {
+                    setTotalDragDistance((int) (getMeasuredHeight() * 1.6f));
+                }
+                setOriginalValue(getMeasuredHeight());
                 reset();
             }
         });
@@ -56,8 +56,9 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
      */
     @Override
     public void changValue(float offset) {
+        JLog.i("----------------");
         bringToFront();
-        mCurrentTargetOffsetTop += offset;
+        helper.changValue(offset);
         requestLayout();
     }
 
@@ -67,24 +68,46 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
     @Override
     public void reset() {
         setVisibility(View.GONE);
-        mCurrentTargetOffsetTop = 0;
-        changValue(mCurrentTargetOffsetTop);
+        helper.reset();
+        changValue(helper.getCurrentValue());
     }
 
     @Override
     public int getOriginalValue() {
-        return mOriginalOffsetTop;
+        return helper.getOriginalValue();
+    }
+
+    /**
+     * 设置View的初始状态值，一般为高度 或者Top值
+     *
+     * @param mOriginalOffsetTop
+     */
+    @Override
+    public void setOriginalValue(int mOriginalOffsetTop) {
+        helper.setOriginalValue(mOriginalOffsetTop);
     }
 
     @Override
     public int getTotalDragDistance() {
-        return mTotalDragDistance;
+        return helper.getTotalDragDistance();
+    }
+
+    /**
+     * 设置允许被拖拽的最大距离
+     *
+     * @param totalDragDistance
+     */
+    @Override
+    public void setTotalDragDistance(int totalDragDistance) {
+        helper.setTotalDragDistance(totalDragDistance);
     }
 
     @Override
     public int getCurrentValue() {
-        return mCurrentTargetOffsetTop;
+        return helper.getCurrentValue();
     }
+
+
 
     /**
      * 开始进行滑动
@@ -92,28 +115,15 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
      * @param overscrollTop
      */
     @Override
-    public void moveSpinner(float overscrollTop) {
-        //拖拽距离到最大距离的百分比
-        float originalDragPercent = overscrollTop / getTotalDragDistance();
-        //确定百分比
-        float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
-        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
-        float extraOS = Math.abs(overscrollTop) - getTotalDragDistance();
-        //弹性距离
-        float slingshotDist = getTotalDragDistance();
-        float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
-                / slingshotDist);
-        float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
-                (tensionSlingshotPercent / 4), 2)) * 2f;
-
-        float extraMove = (slingshotDist) * tensionPercent * 2;
-
-        int targetY = (int) ((slingshotDist * dragPercent) + extraMove);
-
-        if (getVisibility() != View.VISIBLE) {
-            setVisibility(View.VISIBLE);
+    public int moveSpinner(float overscrollTop) {
+        if (getVisibility()!=VISIBLE){
+            setVisibility(VISIBLE);
         }
-        changValue(targetY - getCurrentValue());
+        final int targetY = helper.moveSpinner(overscrollTop );
+        int i = targetY - getCurrentValue();
+        JLog.i("==="+i);
+        changValue(i);
+        return targetY;
     }
 
     @Override

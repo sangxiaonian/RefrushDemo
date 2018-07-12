@@ -3,11 +3,9 @@ package sang.com.refrushdemo.refrush.view;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.View;
 import android.widget.RelativeLayout;
 
-import java.util.List;
-
+import sang.com.refrushdemo.refrush.helper.view.ViewHelper;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
 /**
@@ -15,9 +13,8 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
  */
 
 public class ParallaxView extends RelativeLayout implements IRefrushView {
-    private int mTotalDragDistance;
-    private int mCurrentTargetOffsetTop;
-    private int mOriginalOffsetTop;
+
+    private IRefrushView helper;
 
     public ParallaxView(Context context) {
         this(context, null, 0);
@@ -33,11 +30,16 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
     }
 
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
+        helper = new ViewHelper();
         post(new Runnable() {
             @Override
             public void run() {
-                mTotalDragDistance = (int) (getMeasuredHeight() * 1.6f);
-                mOriginalOffsetTop =  getMeasuredHeight();
+                if (getTotalDragDistance()==0){
+                    setTotalDragDistance((int) (getMeasuredHeight() * 1.6f));
+                }
+                if (getOriginalValue()==0){
+                    setOriginalValue(getMeasuredHeight());
+                }
             }
         });
     }
@@ -46,12 +48,12 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
     /**
      * 根据传入的值，更改此时view的状态
      *
-     * @param offset 此次操作造成的该变量
+     * @param offset
      */
     @Override
     public void changValue(float offset) {
         bringToFront();
-        mCurrentTargetOffsetTop += offset;
+        helper.changValue(offset);
         requestLayout();
     }
 
@@ -60,71 +62,62 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
      */
     @Override
     public void reset() {
-        mCurrentTargetOffsetTop = 0;
-        changValue(mCurrentTargetOffsetTop);
+        helper.reset();
+        changValue(helper.getCurrentValue());
     }
 
-    /**
-     * 获取到View的初始状态值，一般为高度 或者Top值
-     *
-     * @return
-     */
     @Override
     public int getOriginalValue() {
-        return mOriginalOffsetTop;
+        return helper.getOriginalValue();
     }
 
     /**
-     * @return 允许被拖拽的最大距离
+     * 设置View的初始状态值，一般为高度 或者Top值
+     *
+     * @param mOriginalOffsetTop
      */
+    @Override
+    public void setOriginalValue(int mOriginalOffsetTop) {
+        helper.setOriginalValue(mOriginalOffsetTop);
+    }
+
     @Override
     public int getTotalDragDistance() {
-        return mTotalDragDistance;
+        return helper.getTotalDragDistance();
     }
 
     /**
-     * @return View当前的状态值，一般为高度或者Top值
+     * 设置允许被拖拽的最大距离
+     *
+     * @param totalDragDistance
      */
+    @Override
+    public void setTotalDragDistance(int totalDragDistance) {
+        helper.setTotalDragDistance(totalDragDistance);
+    }
+
     @Override
     public int getCurrentValue() {
-        return mCurrentTargetOffsetTop;
+        return helper.getCurrentValue();
     }
 
     /**
-     * 手指滑动时候的处理
+     * 开始进行滑动
      *
-     * @param overscrollTop 手指滑动的总距离
+     * @param overscrollTop
      */
     @Override
-    public void moveSpinner(float overscrollTop) {
-//拖拽距离到最大距离的百分比
-        float originalDragPercent = overscrollTop / getTotalDragDistance();
-        //确定百分比
-        float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
-        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
-        float extraOS = Math.abs(overscrollTop) - getTotalDragDistance();
-        //弹性距离
-        float slingshotDist = getTotalDragDistance();
-        float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
-                / slingshotDist);
-        float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
-                (tensionSlingshotPercent / 4), 2)) * 2f;
-
-        float extraMove = (slingshotDist) * tensionPercent * 2;
-
-        int targetY = (int) ((slingshotDist * dragPercent) + extraMove);
-
-        if (getVisibility() != View.VISIBLE) {
-            setVisibility(View.VISIBLE);
-        }
+    public int moveSpinner(float overscrollTop) {
+        final int targetY = helper.moveSpinner(overscrollTop);
         changValue(targetY - getCurrentValue());
+        return targetY;
     }
 
     @Override
     public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
-        layout((parentWidth / 2 - circleWidth / 2),  getPaddingTop() ,
-                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop()+circleHeight);
+        layout((parentWidth / 2 - circleWidth / 2), getPaddingTop(),
+                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop() + circleHeight);
     }
 }

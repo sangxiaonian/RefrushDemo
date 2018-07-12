@@ -25,10 +25,22 @@ public interface IRefrushView {
     int getOriginalValue();
 
     /**
+     * 设置View的初始状态值，一般为高度 或者Top值
+     * @param mOriginalOffsetTop
+     */
+    void setOriginalValue(int mOriginalOffsetTop);
+
+    /**
      *
      * @return 允许被拖拽的最大距离
      */
     int getTotalDragDistance();
+
+    /**
+     * 设置允许被拖拽的最大距离
+     * @param totalDragDistance
+     */
+    void setTotalDragDistance(int totalDragDistance);
 
     /**
      *
@@ -40,7 +52,7 @@ public interface IRefrushView {
      * 手指滑动时候的处理
      * @param overscrollTop 手指滑动的总距离
      */
-    void moveSpinner(float overscrollTop);
+    int moveSpinner(float overscrollTop);
 
     void layoutChild(int parentWidth, int parentHeight);
 }
