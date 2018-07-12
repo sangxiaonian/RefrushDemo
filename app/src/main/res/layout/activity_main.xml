@@ -24,7 +24,7 @@
     android:layout_height="5dp" />
 
 
-    <sang.com.refrushdemo.RefrushLayoutView
+    <sang.com.easyrefrush.RefrushLayoutView
         android:layout_width="match_parent"
         android:id="@+id/xrefresh"
         android:layout_weight="5"
@@ -34,7 +34,7 @@
             android:id="@+id/rv"
             android:layout_marginBottom="60dp"
             android:layout_height="match_parent"/>
-    </sang.com.refrushdemo.RefrushLayoutView>
+    </sang.com.easyrefrush.RefrushLayoutView>
 
 
 

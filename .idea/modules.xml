@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/EasyRefrush/EasyRefrush.iml" filepath="$PROJECT_DIR$/EasyRefrush/EasyRefrush.iml" />
       <module fileurl="file://$PROJECT_DIR$/RefrushDemo.iml" filepath="$PROJECT_DIR$/RefrushDemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
