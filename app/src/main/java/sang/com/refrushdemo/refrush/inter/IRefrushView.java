@@ -1,5 +1,7 @@
 package sang.com.refrushdemo.refrush.inter;
 
+import sang.com.refrushdemo.refrush.EnumCollections;
+
 /**
  * 作者： ${PING} on 2018/7/11.
  * 刷新控件
@@ -54,5 +56,17 @@ public interface IRefrushView {
      */
     int moveSpinner(float overscrollTop);
 
+    /**
+     * 对对应的布局进行布置
+     * @param parentWidth
+     * @param parentHeight
+     */
     void layoutChild(int parentWidth, int parentHeight);
+
+    /**
+     * 获取到头部类型
+     * @return 返回值为刷新控件类型
+     */
+    EnumCollections.HeadStyle getHeadStyle();
+
 }

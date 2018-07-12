@@ -3,10 +3,8 @@ package sang.com.refrushdemo.refrush.view;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.widget.RelativeLayout;
 
-import sang.com.refrushdemo.refrush.BaseRefrushLayout;
-import sang.com.refrushdemo.refrush.helper.view.ViewHelper;
+import sang.com.refrushdemo.refrush.EnumCollections;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
 /**
@@ -14,6 +12,7 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
  */
 
 public class ParallaxView extends BaseRefrushView implements IRefrushView {
+
 
 
     public ParallaxView(Context context) {
@@ -30,7 +29,6 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
     }
 
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
-
     }
 
 
@@ -74,5 +72,36 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
         final int circleHeight = getMeasuredHeight();
         layout((parentWidth / 2 - circleWidth / 2), getPaddingTop(),
                 (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop() + circleHeight);
+    }
+
+    /**
+     * 获取到头部类型
+     *
+     * @return 返回值为刷新控件类型
+     */
+    @Override
+    public EnumCollections.HeadStyle getHeadStyle() {
+        return EnumCollections.HeadStyle.PARALLAX;
+    }
+
+
+    /**
+     * 移动到初始位置的动画，取消或者刷新完成后执行
+     *
+     * @param value 动画经过的路径和初始值
+     */
+    @Override
+    public void animationToStart(int... value) {
+        animationHelper.animationToStart(getCurrentValue(),0);
+    }
+
+    /**
+     * 移动到刷新位置的动画
+     *
+     * @param value 动画经过的路径和初始值
+     */
+    @Override
+    public void animationToRefrush(int... value) {
+        animationHelper.animationToRefrush(getCurrentValue(),0);
     }
 }

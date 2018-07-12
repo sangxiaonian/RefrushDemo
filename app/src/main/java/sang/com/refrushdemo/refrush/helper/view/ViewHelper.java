@@ -2,6 +2,7 @@ package sang.com.refrushdemo.refrush.helper.view;
 
 import android.view.View;
 
+import sang.com.refrushdemo.refrush.EnumCollections;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
 /**
@@ -9,7 +10,6 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
  */
 
 public class ViewHelper implements IRefrushView {
-
 
     /**
      * 当前所在位置
@@ -114,4 +114,16 @@ public class ViewHelper implements IRefrushView {
     public void layoutChild(int parentWidth, int parentHeight) {
 
     }
+
+    /**
+     * 获取到头部类型
+     *
+     * @return 返回值为刷新控件类型
+     */
+    @Override
+    public EnumCollections.HeadStyle getHeadStyle() {
+        return null;
+    }
+
+
 }

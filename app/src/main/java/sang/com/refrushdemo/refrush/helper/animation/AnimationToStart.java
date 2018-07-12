@@ -5,7 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 
-import sang.com.refrushdemo.inter.IAnimationListener;
+import sang.com.refrushdemo.refrush.helper.animation.inter.AnimationCollection;
 
 /**
  * 作者： ${PING} on 2018/7/10.
@@ -15,7 +15,7 @@ public class AnimationToStart {
 
     private ValueAnimator animator = ValueAnimator.ofInt();
 
-    IAnimationListener mListener;
+    AnimationCollection.IAnimationListener mListener;
 
 
 
@@ -44,7 +44,7 @@ public class AnimationToStart {
 
 
 
-    public AnimationToStart addListener(final IAnimationListener listener) {
+    public AnimationToStart addListener(final AnimationCollection.IAnimationListener listener) {
 
         mListener=listener;
 
@@ -53,14 +53,14 @@ public class AnimationToStart {
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (mListener!=null){
-                    mListener.onAnimationEnd();
+                    mListener.animationEnd();
                 }
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
                 if (mListener!=null){
-                    mListener.onAnimationStart();
+                    mListener.animationStart();
                 }
             }
 
@@ -72,7 +72,7 @@ public class AnimationToStart {
                 if (mListener!=null){
                     int animatedValue = (int) animation.getAnimatedValue();
                     float animatedFraction = animation.getAnimatedFraction();
-                    mListener.onAnimationUpdate(animatedFraction,animatedValue);
+                    mListener.animationUpdate(animatedFraction,animatedValue);
                 }
             }
         });

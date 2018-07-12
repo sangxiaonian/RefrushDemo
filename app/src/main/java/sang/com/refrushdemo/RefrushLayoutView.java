@@ -12,10 +12,10 @@ import android.view.ViewConfiguration;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ListView;
 
-import sang.com.refrushdemo.inter.DefaultAnimationListenerIml;
 import sang.com.refrushdemo.inter.OnRefreshListener;
 import sang.com.refrushdemo.refrush.BaseRefrushLayout;
-import sang.com.refrushdemo.refrush.helper.animation.AnimationToStart;
+import sang.com.refrushdemo.refrush.EnumCollections;
+import sang.com.refrushdemo.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 import sang.com.refrushdemo.utils.JLog;
 
@@ -23,7 +23,7 @@ import sang.com.refrushdemo.utils.JLog;
  * 作者： ${PING} on 2018/6/22.
  */
 
-public class RefrushLayoutView extends BaseRefrushLayout {
+public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCollection.IAnimationListener {
 
 
     /**
@@ -39,11 +39,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
 
     private NestedScrollingParentHelper mNestedScrollingParentHelper;
-
-    /**
-     * 头部刷新控件移动距离
-     */
-//    private int mCurrentTargetOffsetTop;
 
 
     //触发正在刷新或者取消刷新时候，头部刷新控件正在原始位置
@@ -61,17 +56,8 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
     private OnRefreshListener mListener;
 
-    //动画执行时间
-    private static final int ANIMATE_TO_START_DURATION = 200;
-
-    //减速差值器
-    private static final float DECELERATE_INTERPOLATION_FACTOR = 2f;
-
-
-    private AnimationToStart animationToStart;
-
-    private DecelerateInterpolator mDecelerateInterpolator;
     private IRefrushView refrushView;
+    private AnimationCollection.IAnimationHelper topAnimationHelper;
 
 
     public RefrushLayoutView(Context context) {
@@ -88,41 +74,8 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     private void initView(Context context, AttributeSet attrs) {
-        animationToStart = new AnimationToStart()
-                .addInterpolator(mDecelerateInterpolator)
-                .addDuration(ANIMATE_TO_START_DURATION)
-                .addListener(new DefaultAnimationListenerIml() {
-
-                    @Override
-                    public void onAnimationStart() {
-                        mReturningToStart = true;
-                    }
-
-                    @Override
-                    public void onAnimationUpdate(float animatedFraction, float animatedValue) {
-                        refrushView.changValue(animatedValue - refrushView.getCurrentValue());
-                    }
-
-                    @Override
-                    public void onAnimationEnd() {
-                        super.onAnimationEnd();
-                        if (mRefreshing) {
-                            if (mListener != null) {
-                                mListener.onRefresh();
-                            }
-                        } else {
-                            refrushView.reset();
-                        }
-                        mReturningToStart = false;
-                    }
-                })
-        ;
-
-
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
-
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        mDecelerateInterpolator = new DecelerateInterpolator(DECELERATE_INTERPOLATION_FACTOR);
         topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
         addView(topRefrushView);
 
@@ -130,6 +83,10 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
         if (topRefrushView instanceof IRefrushView) {
             refrushView = (IRefrushView) topRefrushView;
+        }
+        if (topRefrushView instanceof AnimationCollection.IAnimationHelper) {
+            topAnimationHelper = (AnimationCollection.IAnimationHelper) topRefrushView;
+            topAnimationHelper.setAnimationListener(this);
         }
 
 
@@ -172,7 +129,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             return;
         }
 
-        refrushView.layoutChild(width,height);
+        refrushView.layoutChild(width, height);
 
 
         final View child = mTarget;
@@ -319,7 +276,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     private void finishSpinner(float overscrollTop) {
-        if (overscrollTop > refrushView.getTotalDragDistance()) {
+        if (overscrollTop > refrushView.getTotalDragDistance()&&refrushView.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
             //开始刷新动画
             setRefreshing(true);
         } else {
@@ -332,6 +289,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         mRefreshing = false;
         //取消刷新动画
         animateOffsetToStartPosition(refrushView.getCurrentValue());
+
     }
 
     private void setRefreshing(boolean refreshing) {
@@ -348,16 +306,39 @@ public class RefrushLayoutView extends BaseRefrushLayout {
      * @param from 开始的位置
      */
     private void animateOffsetToCorrectPosition(int from) {
-        animationToStart.reset();
-        animationToStart.addIntValues(from, refrushView.getTotalDragDistance());
-        animationToStart.start();
-
+        topAnimationHelper.animationToRefrush();
     }
 
     private void animateOffsetToStartPosition(int from) {
-        animationToStart.reset();
-        animationToStart.addIntValues(from, 0);
-        animationToStart.start();
+        topAnimationHelper.animationToStart();
+    }
+    /**
+     * 动画开始
+     */
+    @Override
+    public void animationStart() {
+        mReturningToStart = true;
+    }
+
+    @Override
+    public void animationEnd() {
+        if (mRefreshing) {
+            if (mListener != null) {
+                mListener.onRefresh();
+            }
+        } else {
+            refrushView.reset();
+        }
+        mReturningToStart = false;
+    }
+
+    /**
+     * @param animatedFraction 动画执行比例 0-1
+     * @param animatedValue    动画执行当前值
+     */
+    @Override
+    public void animationUpdate(float animatedFraction, float animatedValue) {
+        refrushView.changValue(animatedValue - refrushView.getCurrentValue());
     }
 
     private final int[] mParentScrollConsumed = new int[2];
@@ -473,5 +454,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             refrushView.moveSpinner(mTotalUnconsumed);
         }
     }
+
 
 }

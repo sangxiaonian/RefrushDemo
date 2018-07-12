@@ -3,9 +3,11 @@ package sang.com.refrushdemo.refrush.view;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import sang.com.refrushdemo.refrush.EnumCollections;
+import sang.com.refrushdemo.refrush.helper.animation.AnimationRefrush;
+import sang.com.refrushdemo.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.refrushdemo.refrush.helper.view.ViewHelper;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
@@ -13,8 +15,9 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
  * 作者： ${PING} on 2018/7/12.
  */
 
-public abstract class BaseRefrushView extends RelativeLayout implements IRefrushView {
+public abstract class BaseRefrushView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
     protected IRefrushView helper;
+    protected AnimationCollection.IAnimationHelper animationHelper;
 
     public BaseRefrushView(Context context) {
         this(context, null, 0);
@@ -34,6 +37,7 @@ public abstract class BaseRefrushView extends RelativeLayout implements IRefrush
 
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         helper = new ViewHelper();
+        animationHelper=new AnimationRefrush();
         post(new Runnable() {
             @Override
             public void run() {
@@ -85,7 +89,18 @@ public abstract class BaseRefrushView extends RelativeLayout implements IRefrush
         return helper.getCurrentValue();
     }
 
+    @Override
+    public EnumCollections.HeadStyle getHeadStyle() {
+        return EnumCollections.HeadStyle.REFRUSH;
+    }
 
-
-
+    /**
+     * 设置动画监听
+     *
+     * @param listener
+     */
+    @Override
+    public void setAnimationListener(AnimationCollection.IAnimationListener listener) {
+        animationHelper.setAnimationListener(listener);
+    }
 }

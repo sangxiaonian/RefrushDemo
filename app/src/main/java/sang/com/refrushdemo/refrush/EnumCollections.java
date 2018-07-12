@@ -14,5 +14,19 @@ public class EnumCollections {
     }
 
 
+    /**
+     * 默认头部类型
+     */
+    public enum HeadStyle{
+        /**
+         * 视差特效
+         */
+        PARALLAX,
+        /**
+         * 刷新
+         */
+        REFRUSH
+    }
+
 
 }
