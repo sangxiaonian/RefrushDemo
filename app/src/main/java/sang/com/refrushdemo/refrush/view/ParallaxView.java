@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
 
+import sang.com.refrushdemo.refrush.BaseRefrushLayout;
 import sang.com.refrushdemo.refrush.helper.view.ViewHelper;
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
@@ -12,9 +13,8 @@ import sang.com.refrushdemo.refrush.inter.IRefrushView;
  * 作者： ${PING} on 2018/7/12.
  */
 
-public class ParallaxView extends RelativeLayout implements IRefrushView {
+public class ParallaxView extends BaseRefrushView implements IRefrushView {
 
-    private IRefrushView helper;
 
     public ParallaxView(Context context) {
         this(context, null, 0);
@@ -30,18 +30,7 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
     }
 
     private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
-        helper = new ViewHelper();
-        post(new Runnable() {
-            @Override
-            public void run() {
-                if (getTotalDragDistance()==0){
-                    setTotalDragDistance((int) (getMeasuredHeight() * 1.6f));
-                }
-                if (getOriginalValue()==0){
-                    setOriginalValue(getMeasuredHeight());
-                }
-            }
-        });
+
     }
 
 
@@ -66,45 +55,10 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
         changValue(helper.getCurrentValue());
     }
 
-    @Override
-    public int getOriginalValue() {
-        return helper.getOriginalValue();
-    }
-
     /**
-     * 设置View的初始状态值，一般为高度 或者Top值
+     * 手指滑动时候的处理
      *
-     * @param mOriginalOffsetTop
-     */
-    @Override
-    public void setOriginalValue(int mOriginalOffsetTop) {
-        helper.setOriginalValue(mOriginalOffsetTop);
-    }
-
-    @Override
-    public int getTotalDragDistance() {
-        return helper.getTotalDragDistance();
-    }
-
-    /**
-     * 设置允许被拖拽的最大距离
-     *
-     * @param totalDragDistance
-     */
-    @Override
-    public void setTotalDragDistance(int totalDragDistance) {
-        helper.setTotalDragDistance(totalDragDistance);
-    }
-
-    @Override
-    public int getCurrentValue() {
-        return helper.getCurrentValue();
-    }
-
-    /**
-     * 开始进行滑动
-     *
-     * @param overscrollTop
+     * @param overscrollTop 手指滑动的总距离
      */
     @Override
     public int moveSpinner(float overscrollTop) {
@@ -112,6 +66,7 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
         changValue(targetY - getCurrentValue());
         return targetY;
     }
+
 
     @Override
     public void layoutChild(int parentWidth, int parentHeight) {
