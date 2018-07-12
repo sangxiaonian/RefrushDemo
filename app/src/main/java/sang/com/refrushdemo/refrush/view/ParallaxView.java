@@ -6,33 +6,28 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
 
+import java.util.List;
+
 import sang.com.refrushdemo.refrush.inter.IRefrushView;
 
 /**
- * 作者： ${PING} on 2018/7/11.
+ * 作者： ${PING} on 2018/7/12.
  */
 
-public class TopRefrushView extends RelativeLayout implements IRefrushView {
-
-    //原始高度
-    private int mOriginalOffsetTop;
-    //拖拽的总共距离
+public class ParallaxView extends RelativeLayout implements IRefrushView {
     private int mTotalDragDistance;
-    /**
-     * 当前所在位置
-     */
     private int mCurrentTargetOffsetTop;
+    private int mOriginalOffsetTop;
 
-
-    public TopRefrushView(Context context) {
+    public ParallaxView(Context context) {
         this(context, null, 0);
     }
 
-    public TopRefrushView(Context context, @Nullable AttributeSet attrs) {
+    public ParallaxView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public TopRefrushView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public ParallaxView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initView(context, attrs, defStyleAttr);
     }
@@ -42,8 +37,7 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
             @Override
             public void run() {
                 mTotalDragDistance = (int) (getMeasuredHeight() * 1.6f);
-                mOriginalOffsetTop = mCurrentTargetOffsetTop - getMeasuredHeight();
-                reset();
+                mOriginalOffsetTop =  getMeasuredHeight();
             }
         });
     }
@@ -52,13 +46,11 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
     /**
      * 根据传入的值，更改此时view的状态
      *
-     * @param offset
+     * @param offset 此次操作造成的该变量
      */
     @Override
     public void changValue(float offset) {
-        bringToFront();
-        mCurrentTargetOffsetTop += offset;
-        requestLayout();
+
     }
 
     /**
@@ -66,34 +58,43 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
      */
     @Override
     public void reset() {
-        setVisibility(View.GONE);
-        mCurrentTargetOffsetTop = 0;
-        changValue(mCurrentTargetOffsetTop);
+
     }
 
+    /**
+     * 获取到View的初始状态值，一般为高度 或者Top值
+     *
+     * @return
+     */
     @Override
     public int getOriginalValue() {
         return mOriginalOffsetTop;
     }
 
+    /**
+     * @return 允许被拖拽的最大距离
+     */
     @Override
     public int getTotalDragDistance() {
         return mTotalDragDistance;
     }
 
+    /**
+     * @return View当前的状态值，一般为高度或者Top值
+     */
     @Override
     public int getCurrentValue() {
         return mCurrentTargetOffsetTop;
     }
 
     /**
-     * 开始进行滑动
+     * 手指滑动时候的处理
      *
-     * @param overscrollTop
+     * @param overscrollTop 手指滑动的总距离
      */
     @Override
     public void moveSpinner(float overscrollTop) {
-        //拖拽距离到最大距离的百分比
+//拖拽距离到最大距离的百分比
         float originalDragPercent = overscrollTop / getTotalDragDistance();
         //确定百分比
         float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
@@ -120,7 +121,7 @@ public class TopRefrushView extends RelativeLayout implements IRefrushView {
     public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
-        layout((parentWidth / 2 - circleWidth / 2), getCurrentValue() + getPaddingTop() - circleHeight,
-                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop());
+        layout((parentWidth / 2 - circleWidth / 2), getCurrentValue() + getPaddingTop() ,
+                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop()- circleHeight);
     }
 }

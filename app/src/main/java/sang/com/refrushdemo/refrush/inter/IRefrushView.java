@@ -41,4 +41,6 @@ public interface IRefrushView {
      * @param overscrollTop 手指滑动的总距离
      */
     void moveSpinner(float overscrollTop);
+
+    void layoutChild(int parentWidth, int parentHeight);
 }

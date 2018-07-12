@@ -5,7 +5,6 @@ import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,7 +31,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
      */
     private View mTarget;
     private View topRefrushView;//头部刷新控件
-
 
     /**
      * 是否是侵入式刷新布局
@@ -128,7 +126,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
         addView(topRefrushView);
 
-         invasive=false;
+        invasive = true;
 
         if (topRefrushView instanceof IRefrushView) {
             refrushView = (IRefrushView) topRefrushView;
@@ -174,14 +172,10 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             return;
         }
 
-        int circleWidth = topRefrushView.getMeasuredWidth();
-        int circleHeight = topRefrushView.getMeasuredHeight();
-        topRefrushView.layout((width / 2 - circleWidth / 2), refrushView.getCurrentValue() + getPaddingTop(),
-                (width / 2 + circleWidth / 2), refrushView.getCurrentValue() + getPaddingTop() + circleHeight);
+        refrushView.layoutChild(width,height);
 
 
         final View child = mTarget;
-
         if (invasive) {
             final int childLeft = getPaddingLeft();
             final int childTop = topRefrushView.getBottom();
@@ -247,6 +241,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     private int mTouchSlop;
     //垂直方向手指触摸开始滑动时候的坐标位置
     private float mInitialMotionY;
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
@@ -309,6 +304,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
         return mIsBeingDragged;
     }
+
     /**
      * 开始数值方向拖拽
      *
@@ -321,6 +317,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             mIsBeingDragged = true;
         }
     }
+
     private void finishSpinner(float overscrollTop) {
         if (overscrollTop > refrushView.getTotalDragDistance()) {
             //开始刷新动画
@@ -336,6 +333,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         //取消刷新动画
         animateOffsetToStartPosition(refrushView.getCurrentValue());
     }
+
     private void setRefreshing(boolean refreshing) {
         if (refreshing && mRefreshing != refreshing) {
             entryTargetView();
@@ -343,6 +341,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             mRefreshing = refreshing;
         }
     }
+
     /**
      * 执行动画，移动到刷新位置
      *
@@ -354,21 +353,25 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         animationToStart.start();
 
     }
+
     private void animateOffsetToStartPosition(int from) {
         animationToStart.reset();
-        animationToStart.addIntValues(from, refrushView.getOriginalValue());
+        animationToStart.addIntValues(from, 0);
         animationToStart.start();
     }
+
     private final int[] mParentScrollConsumed = new int[2];
     private final int[] mParentOffsetInWindow = new int[2];
     //是否处于嵌套滑动过程请
     private boolean mNestedScrollInProgress;
     private int mTotalUnconsumed;
+
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         return isEnabled() && !mReturningToStart && !mRefreshing
                 && (nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL) != 0;
     }
+
     @Override
     public void onNestedScrollAccepted(View child, View target, int axes) {
         // Reset the counter of how much leftover scroll needs to be consumed.
@@ -378,12 +381,13 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         mTotalUnconsumed = 0;
         mNestedScrollInProgress = true;
     }
+
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 
 //        //对于下拉刷新，如果处于初始位置
         if (invasive) {
-            if (dy<0&&!canChildScrollUp()){//如果是下拉操作，消耗掉所有的数据
+            if (dy < 0 && !canChildScrollUp()) {//如果是下拉操作，消耗掉所有的数据
                 if (dy > mTotalUnconsumed) {
                     consumed[1] = dy - (int) mTotalUnconsumed;
                     mTotalUnconsumed = 0;
@@ -392,7 +396,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                     consumed[1] = dy;
                 }
                 refrushView.moveSpinner(mTotalUnconsumed);
-            }else if (dy>0&&mTotalUnconsumed>0){//如果是想上滑动
+            } else if (dy > 0 && mTotalUnconsumed > 0) {//如果是想上滑动
                 if (dy > mTotalUnconsumed) {
                     consumed[1] = dy - (int) mTotalUnconsumed;
                     mTotalUnconsumed = 0;
@@ -402,13 +406,14 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                 }
                 refrushView.moveSpinner(mTotalUnconsumed);
             }
-        }else {
+        } else {
             if (dy > 0 && mTotalUnconsumed > 0) {
                 if (dy > mTotalUnconsumed) {
                     consumed[1] = dy - (int) mTotalUnconsumed;
                     mTotalUnconsumed = 0;
                 } else {
-                    mTotalUnconsumed -= dy;
+//                    mTotalUnconsumed -= dy;
+                    caculeUnConsum(dy);
                     consumed[1] = dy;
                 }
                 refrushView.moveSpinner(mTotalUnconsumed);
@@ -424,20 +429,24 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     private int lastDy;
-    private  void caculeUnConsum(int dy) {
-        if (lastDy==0){
-            lastDy=dy;
+
+    private void caculeUnConsum(int dy) {
+        if (lastDy == 0) {
+            lastDy = dy;
         }
-        if (dy!=0&&lastDy/dy!=-1){
-            mTotalUnconsumed -= dy;
-            mTotalUnconsumed= mTotalUnconsumed>2*refrushView.getTotalDragDistance()? (int) (2* refrushView.getTotalDragDistance()) :mTotalUnconsumed;
+        if (dy != 0 && lastDy / dy != -1) {
+            mTotalUnconsumed -= (dy);
+            final int i = 5 * refrushView.getTotalDragDistance();
+            mTotalUnconsumed = mTotalUnconsumed > i ? (int) (i) : mTotalUnconsumed;
         }
-        lastDy=dy;
+        lastDy = dy;
     }
+
     @Override
     public int getNestedScrollAxes() {
         return mNestedScrollingParentHelper.getNestedScrollAxes();
     }
+
     @Override
     public void onStopNestedScroll(View target) {
         mNestedScrollingParentHelper.onStopNestedScroll(target);
@@ -450,8 +459,9 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         }
         // Dispatch up our nested parent
         stopNestedScroll();
-        lastDy=0;
+        lastDy = 0;
     }
+
     @Override
     public void onNestedScroll(final View target, final int dxConsumed, final int dyConsumed,
                                final int dxUnconsumed, final int dyUnconsumed) {
@@ -460,7 +470,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
         if (dy < 0 && !canChildScrollUp()) {
             mTotalUnconsumed += Math.abs(dy);
-           refrushView. moveSpinner(mTotalUnconsumed);
+            refrushView.moveSpinner(mTotalUnconsumed);
         }
     }
 
