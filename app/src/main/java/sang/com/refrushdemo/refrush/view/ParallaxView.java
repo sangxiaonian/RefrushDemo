@@ -50,7 +50,9 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
      */
     @Override
     public void changValue(float offset) {
-
+        bringToFront();
+        mCurrentTargetOffsetTop += offset;
+        requestLayout();
     }
 
     /**
@@ -58,7 +60,8 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
      */
     @Override
     public void reset() {
-
+        mCurrentTargetOffsetTop = 0;
+        changValue(mCurrentTargetOffsetTop);
     }
 
     /**
@@ -121,7 +124,7 @@ public class ParallaxView extends RelativeLayout implements IRefrushView {
     public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
-        layout((parentWidth / 2 - circleWidth / 2), getCurrentValue() + getPaddingTop() ,
-                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop()- circleHeight);
+        layout((parentWidth / 2 - circleWidth / 2),  getPaddingTop() ,
+                (parentWidth / 2 + circleWidth / 2), getCurrentValue() + getPaddingTop()+circleHeight);
     }
 }
