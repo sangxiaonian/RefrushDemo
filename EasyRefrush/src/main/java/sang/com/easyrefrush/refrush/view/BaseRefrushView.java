@@ -36,7 +36,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
 
 
 
-    private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
+    protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         helper = new ViewHelper();
         animationHelper=new AnimationRefrush();
         post(new Runnable() {
@@ -48,9 +48,11 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
                 if (getOriginalValue() == 0) {
                     setOriginalValue(getMeasuredHeight());
                 }
+                reset();
             }
         });
     }
+
 
 
 
@@ -90,6 +92,15 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
         return helper.getCurrentValue();
     }
 
+    /**
+     * 获取停止滑动头部，将滑动数据交个其他控件的最小值
+     *
+     * @return
+     */
+    @Override
+    public int getMinValueToScrollList() {
+        return 0;
+    }
     @Override
     public EnumCollections.HeadStyle getHeadStyle() {
         return EnumCollections.HeadStyle.REFRUSH;
@@ -104,4 +115,6 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
     public void setAnimationListener(AnimationCollection.IAnimationListener listener) {
         animationHelper.setAnimationListener(listener);
     }
+
+
 }

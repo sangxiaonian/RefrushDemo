@@ -10,8 +10,8 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
 
 /**
  * 作者： ${PING} on 2018/7/11.
+ * 刷新控件
  */
-
 public class TopRefrushView extends BaseRefrushView implements IRefrushView {
 
 
@@ -25,12 +25,9 @@ public class TopRefrushView extends BaseRefrushView implements IRefrushView {
 
     public TopRefrushView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initView(context, attrs, defStyleAttr);
     }
 
-    private void initView(Context context, AttributeSet attrs, int defStyleAttr) {
 
-    }
 
     /**
      * 根据传入的值，更改此时view的状态

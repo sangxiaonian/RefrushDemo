@@ -124,5 +124,15 @@ public class ViewHelper implements IRefrushView {
         return null;
     }
 
+    /**
+     * 获取停止滑动头部，将滑动数据交个其他控件的最小值
+     *
+     * @return
+     */
+    @Override
+    public int getMinValueToScrollList() {
+        return 0;
+    }
+
 
 }

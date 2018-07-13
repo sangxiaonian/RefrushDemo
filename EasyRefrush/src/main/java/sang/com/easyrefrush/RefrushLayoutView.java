@@ -359,7 +359,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, axes);
         // Dispatch up to the nested parent
         startNestedScroll(axes & ViewCompat.SCROLL_AXIS_VERTICAL);
-        mTotalUnconsumed = 0;
+        if (refrushView.getHeadStyle()== EnumCollections.HeadStyle.REFRUSH) {
+            mTotalUnconsumed = 0;
+        }
         mNestedScrollInProgress = true;
     }
 
@@ -368,24 +370,35 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
 
 //        //对于下拉刷新，如果处于初始位置
         if (invasive) {
-            if (dy < 0 && !canChildScrollUp()) {//如果是下拉操作，消耗掉所有的数据
-                if (dy > mTotalUnconsumed) {
-                    consumed[1] = dy - (int) mTotalUnconsumed;
-                    mTotalUnconsumed = 0;
-                } else {
+
+            if (refrushView.getHeadStyle()== EnumCollections.HeadStyle.REFRUSH) {
+                if (dy < 0 && !canChildScrollUp()) {//如果是下拉操作，消耗掉所有的数据
+                    if (dy > mTotalUnconsumed) {
+                        consumed[1] = dy - (int) mTotalUnconsumed;
+                        mTotalUnconsumed = 0;
+                    } else {
+                        caculeUnConsum(dy);
+                        consumed[1] = dy;
+                    }
+                    refrushView.moveSpinner(mTotalUnconsumed);
+                } else if (dy > 0 && mTotalUnconsumed > 0) {//如果是想上滑动
+                    if (dy > mTotalUnconsumed) {
+                        consumed[1] = dy - (int) mTotalUnconsumed;
+                        mTotalUnconsumed = 0;
+                    } else {
+                        caculeUnConsum(dy);
+                        consumed[1] = dy;
+                    }
+                    refrushView.moveSpinner(mTotalUnconsumed);
+                }
+            }else if (refrushView.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX){
+                if ((dy < 0 && !canChildScrollUp())//如果是下拉操作，消耗掉所有的数据
+                        ||(dy > 0 && mTotalUnconsumed > refrushView.getMinValueToScrollList())//如果是想上滑动
+                        ) {
                     caculeUnConsum(dy);
                     consumed[1] = dy;
+                    refrushView.moveSpinner(mTotalUnconsumed);
                 }
-                refrushView.moveSpinner(mTotalUnconsumed);
-            } else if (dy > 0 && mTotalUnconsumed > 0) {//如果是想上滑动
-                if (dy > mTotalUnconsumed) {
-                    consumed[1] = dy - (int) mTotalUnconsumed;
-                    mTotalUnconsumed = 0;
-                } else {
-                    caculeUnConsum(dy);
-                    consumed[1] = dy;
-                }
-                refrushView.moveSpinner(mTotalUnconsumed);
             }
         } else {
             if (dy > 0 && mTotalUnconsumed > 0) {

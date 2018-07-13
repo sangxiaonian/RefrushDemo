@@ -6,31 +6,51 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrush.helper.animation.AnimationRefrush;
+import sang.com.easyrefrush.refrush.helper.view.ViewHelper;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
 
 
 /**
  * 作者： ${PING} on 2018/7/12.
- * 视差特效
- *
- *
+ * 弹性过量滑动
  */
 
-public class ParallaxView extends BaseRefrushView implements IRefrushView {
+public class OverScrollView extends BaseRefrushView implements IRefrushView {
 
 
-    public ParallaxView(Context context) {
+    public OverScrollView(Context context) {
         this(context, null, 0);
     }
 
-    public ParallaxView(Context context, @Nullable AttributeSet attrs) {
+    public OverScrollView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ParallaxView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public OverScrollView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
+    protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
+        helper = new ViewHelper();
+        animationHelper=new AnimationRefrush();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (getTotalDragDistance() == 0) {
+                    setTotalDragDistance((int) (getMeasuredHeight() * 1.6f));
+                }
+                    setOriginalValue(0);
+            }
+        });
+    }
+
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        setOriginalValue(0);
+    }
 
     /**
      * 根据传入的值，更改此时view的状态
@@ -53,8 +73,10 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public void reset() {
+        helper.reset();
+        ViewGroup.LayoutParams params = getLayoutParams();
+        params.height = 0;
         requestLayout();
-
     }
 
     /**
@@ -91,16 +113,6 @@ public class ParallaxView extends BaseRefrushView implements IRefrushView {
     @Override
     public EnumCollections.HeadStyle getHeadStyle() {
         return EnumCollections.HeadStyle.PARALLAX;
-    }
-
-    /**
-     * 获取停止滑动头部，将滑动数据交个其他控件的最小值
-     *
-     * @return
-     */
-    @Override
-    public int getMinValueToScrollList() {
-        return -getOriginalValue();
     }
 
 

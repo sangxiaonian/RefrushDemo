@@ -70,4 +70,11 @@ public interface IRefrushView {
      */
     EnumCollections.HeadStyle getHeadStyle();
 
+
+    /**
+     * 获取停止滑动头部，将滑动数据交个其他控件的最小值
+     * @return
+     */
+    int getMinValueToScrollList();
+
 }
