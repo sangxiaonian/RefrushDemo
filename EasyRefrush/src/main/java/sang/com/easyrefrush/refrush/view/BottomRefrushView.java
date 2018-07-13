@@ -42,8 +42,7 @@ public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
         bringToFront();
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
-        params.height = getOriginalValue() + getCurrentValue();
-        JLog.i(params.height + "");
+        params.height =   getCurrentValue();
         if (params.height < getOriginalValue()) {
             params.height = getOriginalValue();
         }
@@ -90,10 +89,11 @@ public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
 
         final int childTop = parentHeight - getCurrentValue();
         childBottom = childTop - circleHeight;
+        layout((parentWidth / 2 - circleWidth / 2), parentHeight-getCurrentValue(),
+                (parentWidth / 2 + circleWidth / 2),parentHeight + circleHeight-getCurrentValue());
 
-
-        layout((parentWidth / 2 - circleWidth / 2), childTop,
-                (parentWidth / 2 + circleWidth / 2), childBottom);
+//        layout((parentWidth / 2 - circleWidth / 2), childTop,
+//                (parentWidth / 2 + circleWidth / 2), childBottom);
 
 
     }
