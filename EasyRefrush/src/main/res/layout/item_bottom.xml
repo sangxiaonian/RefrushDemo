@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sang.com.easyrefrush.refrush.view.ParallaxView xmlns:android="http://schemas.android.com/apk/res/android"
+<sang.com.easyrefrush.refrush.view.BottomParallaxView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="45dp"
     android:background="#abcdef">
@@ -11,7 +11,7 @@
         android:layout_gravity="center"
         android:background="#fedcba"
         android:gravity="center"
-        android:text="Top"
+        android:text="Bottom"
         android:textColor="#333" />
 
-</sang.com.easyrefrush.refrush.view.ParallaxView>
+</sang.com.easyrefrush.refrush.view.BottomParallaxView>
