@@ -6,6 +6,7 @@ import android.animation.ValueAnimator;
 import android.view.animation.DecelerateInterpolator;
 
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -63,6 +64,8 @@ public class AnimationRefrush implements AnimationCollection.IAnimationHelper {
     public void animationToStart(int... value) {
         animator.resume();
         animator.cancel();
+
+
         animator.setIntValues(value);
         animator.start();
     }
@@ -78,6 +81,13 @@ public class AnimationRefrush implements AnimationCollection.IAnimationHelper {
         animator.cancel();
         animator.setIntValues(value);
         animator.start();
+
+
+        int[] value1 = value;
+        for (int i = 0; i < value1.length; i++) {
+            JLog.i(value[i]+"");
+        }
+
     }
 
     /**

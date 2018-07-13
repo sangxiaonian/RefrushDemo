@@ -43,11 +43,10 @@ public class BottomParallaxView extends BaseRefrushView implements IRefrushView 
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
         params.height = getOriginalValue() + getCurrentValue();
-        if (params.height < 0) {
-            params.height = 0;
+        if (params.height <  getOriginalValue() ) {
+            params.height =  getOriginalValue() ;
         }
     }
-
     /**
      * 取消刷新，刷新成功等操作完成之后，恢复到初始状态
      */
@@ -65,10 +64,11 @@ public class BottomParallaxView extends BaseRefrushView implements IRefrushView 
     @Override
     public int moveSpinner(float overscrollTop) {
         final int targetY;
-        if (getMeasuredHeight() > getOriginalValue()) {//正常情况下的变化
+
+        if (overscrollTop>0) {//正常情况下的变化
             targetY = helper.moveSpinner(overscrollTop);
-        } else {//当向上滑动到原来位置之后，继续向上滑动
-            targetY = (int) overscrollTop;
+        }else {
+            targetY= (int) overscrollTop;
         }
         changValue(targetY - getCurrentValue());
         return targetY;
@@ -79,13 +79,22 @@ public class BottomParallaxView extends BaseRefrushView implements IRefrushView 
     public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
+        final int childBottom  ;
 
-        final int childBottom = parentHeight-getPaddingBottom() ;
-        final int childTop = childBottom-getOriginalValue()-getCurrentValue();
+        if (getCurrentValue()>0) {
+              childBottom = parentHeight-getPaddingBottom() ;
+        }else {
+             childBottom = parentHeight-getPaddingBottom()-getCurrentValue() ;
+        }
+        final int childTop = childBottom-circleHeight;
 
 
         layout((parentWidth / 2 - circleWidth / 2), childTop,
                 (parentWidth / 2 + circleWidth / 2), childBottom);
+
+
+
+
     }
 
     /**
@@ -105,7 +114,8 @@ public class BottomParallaxView extends BaseRefrushView implements IRefrushView 
      */
     @Override
     public int getMinValueToScrollList() {
-        return -getOriginalValue();
+        return -getOriginalValue()/2;
+
     }
 
 

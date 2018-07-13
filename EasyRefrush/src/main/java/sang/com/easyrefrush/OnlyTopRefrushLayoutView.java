@@ -54,7 +54,6 @@ public class OnlyTopRefrushLayoutView extends BaseRefrushLayout implements Anima
 
     private String LOG_TAG = "XRefrush";
 
-    private OnRefreshListener mListener;
 
     private IRefrushView topRefrush,bottomRefrush;
     private AnimationCollection.IAnimationHelper topAnimationHelper,bottomAnimationHelper;
@@ -69,9 +68,6 @@ public class OnlyTopRefrushLayoutView extends BaseRefrushLayout implements Anima
         initView(context, attrs);
     }
 
-    public void setOnRefreshListener(OnRefreshListener mListener) {
-        this.mListener = mListener;
-    }
 
     private void initView(Context context, AttributeSet attrs) {
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
@@ -88,9 +84,6 @@ public class OnlyTopRefrushLayoutView extends BaseRefrushLayout implements Anima
             topAnimationHelper = (AnimationCollection.IAnimationHelper) topRefrushView;
             topAnimationHelper.setAnimationListener(this);
         }
-
-
-
     }
 
 

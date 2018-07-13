@@ -8,11 +8,16 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 
+import sang.com.easyrefrush.inter.OnRefreshListener;
+
 /**
  * 作者： ${PING} on 2018/7/11.
  */
 
-public class BaseRefrushLayout  extends ViewGroup implements NestedScrollingParent, NestedScrollingChild {
+public abstract class BaseRefrushLayout  extends ViewGroup implements NestedScrollingParent, NestedScrollingChild {
+
+    protected OnRefreshListener mListener;
+
 
     private NestedScrollingChildHelper mNestedScrollingChildHelper;
 
@@ -38,9 +43,12 @@ public class BaseRefrushLayout  extends ViewGroup implements NestedScrollingPare
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
     }
+    public void setOnRefreshListener(OnRefreshListener mListener) {
+        this.mListener = mListener;
+    }
 
 
-
+    public abstract void finishRefrush() ;
 
 
 

@@ -23,7 +23,7 @@ import sang.com.easyrefrush.refrushutils.JLog;
  * 作者： ${PING} on 2018/6/22.
  */
 
-public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCollection.IAnimationListener {
+public class EasyRefrushLayoutView extends BaseRefrushLayout implements AnimationCollection.IAnimationListener {
 
 
     /**
@@ -60,11 +60,11 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     private AnimationCollection.IAnimationHelper topAnimationHelper, bottomAnimationHelper;
 
 
-    public RefrushLayoutView(Context context) {
+    public EasyRefrushLayoutView(Context context) {
         this(context, null);
     }
 
-    public RefrushLayoutView(Context context, AttributeSet attrs) {
+    public EasyRefrushLayoutView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView(context, attrs);
     }
@@ -122,10 +122,10 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         }
 
         //对子控件进行测量
-        mTarget.measure(View.MeasureSpec.makeMeasureSpec(
+        mTarget.measure(MeasureSpec.makeMeasureSpec(
                 targetWidth,
-                View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(
-                targetHeight, View.MeasureSpec.EXACTLY));
+                MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(
+                targetHeight, MeasureSpec.EXACTLY));
 
     }
 
@@ -164,8 +164,6 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
             final int childBottom;
             if (bottomRefrushView != null) {
                 childBottom = bottomRefrushView.getTop();
-//                childBottom = height - getPaddingBottom() + childTop;
-
             } else {
                 childBottom = height - getPaddingBottom() + childTop;
             }
@@ -213,11 +211,10 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
      * @return true 表示可以滑动 false 表示不可以
      */
     public boolean canChildScrollUp(int direction) {
-
         if (mTarget instanceof ListView) {
-            return ListViewCompat.canScrollList((ListView) mTarget, -1);
+            return ListViewCompat.canScrollList((ListView) mTarget, direction);
         }
-        return mTarget.canScrollVertically(-1);
+        return mTarget.canScrollVertically(direction);
     }
 
     public boolean canChildScrollUp() {

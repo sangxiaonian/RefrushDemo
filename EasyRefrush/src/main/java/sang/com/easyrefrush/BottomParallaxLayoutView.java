@@ -6,7 +6,6 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ListView;
@@ -16,22 +15,20 @@ import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
  * 作者： ${PING} on 2018/6/22.
+ * 视差特效
  */
 
-public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCollection.IAnimationListener {
+public class BottomParallaxLayoutView extends BaseRefrushLayout implements AnimationCollection.IAnimationListener {
 
 
     /**
      * 目标View，通常为recycleView，listView等被刷新的控件
      */
     private View mTarget;
-    private View topRefrushView;//头部刷新控件
-    private View bottomRefrushView;//头部刷新控件
 
     /**
      * 是否是侵入式刷新布局
@@ -56,15 +53,16 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     private String LOG_TAG = "XRefrush";
 
 
-    private IRefrushView topRefrush, bottomRefrush;
-    private AnimationCollection.IAnimationHelper topAnimationHelper, bottomAnimationHelper;
+    private IRefrushView bottomRefrush;
+    private AnimationCollection.IAnimationHelper bottomAnimationHelper;
+    private View bottomRefrushView;//头部刷新控件
 
 
-    public RefrushLayoutView(Context context) {
+    public BottomParallaxLayoutView(Context context) {
         this(context, null);
     }
 
-    public RefrushLayoutView(Context context, AttributeSet attrs) {
+    public BottomParallaxLayoutView(Context context, AttributeSet attrs) {
         super(context, attrs);
         initView(context, attrs);
     }
@@ -73,21 +71,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     private void initView(Context context, AttributeSet attrs) {
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
         bottomRefrushView = LayoutInflater.from(context).inflate(R.layout.item_bottom, this, false);
-        addView(topRefrushView);
         addView(bottomRefrushView);
-
         invasive = true;
-
-        if (topRefrushView instanceof IRefrushView) {
-            topRefrush = (IRefrushView) topRefrushView;
-        }
-        if (topRefrushView instanceof AnimationCollection.IAnimationHelper) {
-            topAnimationHelper = (AnimationCollection.IAnimationHelper) topRefrushView;
-            topAnimationHelper.setAnimationListener(this);
-        }
-
         if (bottomRefrushView instanceof IRefrushView) {
             bottomRefrush = (IRefrushView) bottomRefrushView;
         }
@@ -112,20 +98,17 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
 
         int targetWidth = getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
         int targetHeight = getMeasuredHeight() - getPaddingTop() - getPaddingBottom();
-        if (topRefrushView != null) {
-            measureChild(topRefrushView, widthMeasureSpec, heightMeasureSpec);
-            targetHeight -= topRefrush.getCurrentValue();
-        }
         if (bottomRefrushView != null) {
             measureChild(bottomRefrushView, widthMeasureSpec, heightMeasureSpec);
             targetHeight -= bottomRefrush.getCurrentValue();
         }
 
+
         //对子控件进行测量
-        mTarget.measure(View.MeasureSpec.makeMeasureSpec(
+        mTarget.measure(MeasureSpec.makeMeasureSpec(
                 targetWidth,
-                View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(
-                targetHeight, View.MeasureSpec.EXACTLY));
+                MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(
+                targetHeight, MeasureSpec.EXACTLY));
 
     }
 
@@ -143,9 +126,6 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
             return;
         }
 
-        if (topRefrush != null) {
-            topRefrush.layoutChild(width, height);
-        }
         if (bottomRefrush != null) {
             bottomRefrush.layoutChild(width, height);
         }
@@ -154,21 +134,16 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         final View child = mTarget;
         if (invasive) {
             final int childLeft = getPaddingLeft();
-            final int childTop;
-            if (topRefrushView != null) {
-                childTop = topRefrushView.getBottom();
-            } else {
-                childTop = getPaddingTop();
-            }
-            final int childWidth = width - getPaddingLeft() - getPaddingRight();
-            final int childBottom;
+            final int childTop = getPaddingTop();
+            final int childBottom  ;
+
             if (bottomRefrushView != null) {
                 childBottom = bottomRefrushView.getTop();
-//                childBottom = height - getPaddingBottom() + childTop;
-
             } else {
                 childBottom = height - getPaddingBottom() + childTop;
             }
+
+            final int childWidth = width - getPaddingLeft() - getPaddingRight();
             child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
         } else {
             final int childLeft = getPaddingLeft();
@@ -186,16 +161,14 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         if (mTarget == null) {
             int childCount = getChildCount();
             int basicCount = 0;
-            if (topRefrushView != null) {
-                basicCount++;
-            }
             if (bottomRefrushView != null) {
                 basicCount++;
             }
+
             if (childCount == (basicCount + 1)) {//出了刷新控件外，至少要有一个子控件
                 for (int i = 0; i < childCount; i++) {
                     View child = getChildAt(i);
-                    if (!child.equals(topRefrushView)&&!child.equals(bottomRefrushView)) {
+                    if (!child.equals(bottomRefrushView)) {
                         mTarget = child;
                         break;
                     }
@@ -215,9 +188,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     public boolean canChildScrollUp(int direction) {
 
         if (mTarget instanceof ListView) {
-            return ListViewCompat.canScrollList((ListView) mTarget, -1);
+            return ListViewCompat.canScrollList((ListView) mTarget, direction);
         }
-        return mTarget.canScrollVertically(-1);
+        return mTarget.canScrollVertically(direction);
     }
 
     public boolean canChildScrollUp() {
@@ -233,68 +206,68 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     //垂直方向手指触摸开始滑动时候的坐标位置
     private float mInitialMotionY;
 
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        final int action = ev.getActionMasked();
-
-        if (mInitialDownY == 0) {
-            mInitialDownY = ev.getRawY();
-        }
-
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-        JLog.i(canChildScrollUp() + ">>>");
-        //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
-        if (!isEnabled() || mReturningToStart || canChildScrollUp()
-                || mRefreshing || mNestedScrollInProgress) {
-            // Fail fast if we're not in a state where a swipe is possible
-            return false;
-        }
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                topRefrush.reset();
-                mIsBeingDragged = false;
-
-                mInitialDownY = ev.getRawY();
-                break;
-
-            case MotionEvent.ACTION_MOVE: {
-
-                final float y = ev.getRawY();
-
-                JLog.d("ACTION_MOVE:" + y);
-
-                startDragging(y);
-
-                if (mIsBeingDragged) {
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    if (overscrollTop > 0) { //如果是向下滑动
-                        topRefrush.moveSpinner(overscrollTop);
-
-                    } else {
-                        return false;
-                    }
-                }
-                break;
-            }
-
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL: {
-                if (mIsBeingDragged) {
-                    final float y = ev.getRawY();
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    mIsBeingDragged = false;
-                    finishSpinner(overscrollTop);
-                }
-                mInitialDownY = 0;
-                return false;
-            }
-        }
-
-        return mIsBeingDragged;
-    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent ev) {
+//        final int action = ev.getActionMasked();
+//
+//        if (mInitialDownY == 0) {
+//            mInitialDownY = ev.getRawY();
+//        }
+//
+//        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
+//            mReturningToStart = false;
+//        }
+//        JLog.i(canChildScrollUp() + ">>>");
+//        //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
+//        if (!isEnabled() || mReturningToStart || canChildScrollUp()
+//                || mRefreshing || mNestedScrollInProgress) {
+//            // Fail fast if we're not in a state where a swipe is possible
+//            return false;
+//        }
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                bottomRefrush.reset();
+//                mIsBeingDragged = false;
+//
+//                mInitialDownY = ev.getRawY();
+//                break;
+//
+//            case MotionEvent.ACTION_MOVE: {
+//
+//                final float y = ev.getRawY();
+//
+//                JLog.d("ACTION_MOVE:" + y);
+//
+//                startDragging(y);
+//
+//                if (mIsBeingDragged) {
+//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
+//                    if (overscrollTop > 0) { //如果是向下滑动
+//                        bottomRefrush.moveSpinner(overscrollTop);
+//
+//                    } else {
+//                        return false;
+//                    }
+//                }
+//                break;
+//            }
+//
+//
+//            case MotionEvent.ACTION_UP:
+//            case MotionEvent.ACTION_CANCEL: {
+//                if (mIsBeingDragged) {
+//                    final float y = ev.getRawY();
+//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
+//                    mIsBeingDragged = false;
+//                    finishSpinner(overscrollTop);
+//                }
+//                mInitialDownY = 0;
+//                return false;
+//            }
+//        }
+//
+//        return mIsBeingDragged;
+//    }
 
     /**
      * 开始数值方向拖拽
@@ -310,7 +283,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     }
 
     private void finishSpinner(float overscrollTop) {
-        if (overscrollTop > topRefrush.getTotalDragDistance() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+        if (overscrollTop > bottomRefrush.getTotalDragDistance() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
             //开始刷新动画
             setRefreshing(true);
         } else {
@@ -322,14 +295,14 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
     public void finishRefrush() {
         mRefreshing = false;
         //取消刷新动画
-        animateOffsetToStartPosition(topRefrush.getCurrentValue());
+        animateOffsetToStartPosition(bottomRefrush.getCurrentValue());
 
     }
 
     private void setRefreshing(boolean refreshing) {
         if (refreshing && mRefreshing != refreshing) {
             entryTargetView();
-            animateOffsetToCorrectPosition(topRefrush.getCurrentValue());
+            animateOffsetToCorrectPosition(bottomRefrush.getCurrentValue());
             mRefreshing = refreshing;
         }
     }
@@ -340,11 +313,11 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
      * @param from 开始的位置
      */
     private void animateOffsetToCorrectPosition(int from) {
-        topAnimationHelper.animationToRefrush();
+        bottomAnimationHelper.animationToRefrush();
     }
 
     private void animateOffsetToStartPosition(int from) {
-        topAnimationHelper.animationToStart();
+        bottomAnimationHelper.animationToStart();
     }
 
     /**
@@ -362,7 +335,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
                 mListener.onRefresh();
             }
         } else {
-            topRefrush.reset();
+            bottomRefrush.reset();
         }
         mReturningToStart = false;
     }
@@ -373,14 +346,14 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
      */
     @Override
     public void animationUpdate(float animatedFraction, float animatedValue) {
-        topRefrush.changValue(animatedValue - topRefrush.getCurrentValue());
+        bottomRefrush.changValue(animatedValue - bottomRefrush.getCurrentValue());
     }
 
     private final int[] mParentScrollConsumed = new int[2];
     private final int[] mParentOffsetInWindow = new int[2];
     //是否处于嵌套滑动过程请
     private boolean mNestedScrollInProgress;
-    private int mTotalUnconsumed;
+    private int mBottomTotalUnconsumed;
 
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
@@ -394,8 +367,8 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         mNestedScrollingParentHelper.onNestedScrollAccepted(child, target, axes);
         // Dispatch up to the nested parent
         startNestedScroll(axes & ViewCompat.SCROLL_AXIS_VERTICAL);
-        if (topRefrush.getHeadStyle() == EnumCollections.HeadStyle.REFRUSH) {
-            mTotalUnconsumed = 0;
+        if (bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.REFRUSH) {
+            mBottomTotalUnconsumed = 0;
         }
         mNestedScrollInProgress = true;
     }
@@ -405,46 +378,25 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
 
 //        //对于下拉刷新，如果处于初始位置
         if (invasive) {
-            if (topRefrush.getHeadStyle() == EnumCollections.HeadStyle.REFRUSH) {
-                if (dy < 0 && !canChildScrollUp()) {//如果是下拉操作，消耗掉所有的数据
-                    if (dy > mTotalUnconsumed) {
-                        consumed[1] = dy - (int) mTotalUnconsumed;
-                        mTotalUnconsumed = 0;
-                    } else {
-                        caculeUnConsum(dy);
-                        consumed[1] = dy;
-                    }
-                    topRefrush.moveSpinner(mTotalUnconsumed);
-                } else if (dy > 0 && mTotalUnconsumed > 0) {//如果是想上滑动
-                    if (dy > mTotalUnconsumed) {
-                        consumed[1] = dy - (int) mTotalUnconsumed;
-                        mTotalUnconsumed = 0;
-                    } else {
-                        caculeUnConsum(dy);
-                        consumed[1] = dy;
-                    }
-                    topRefrush.moveSpinner(mTotalUnconsumed);
-                }
-            } else if (topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                if ((dy < 0 && !canChildScrollUp())//如果是下拉操作，消耗掉所有的数据
-                        || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
+            if (bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
+                if ((dy >0 && !canChildScrollUp(1))//如果是下拉操作，消耗掉所有的数据
+                        || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
                         ) {
-                    caculeUnConsum(dy);
+                    caculeUnConsum(-dy);
                     consumed[1] = dy;
-                    topRefrush.moveSpinner(mTotalUnconsumed);
+                    bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                 }
             }
         } else {
-            if (dy > 0 && mTotalUnconsumed > 0) {
-                if (dy > mTotalUnconsumed) {
-                    consumed[1] = dy - (int) mTotalUnconsumed;
-                    mTotalUnconsumed = 0;
+            if (dy > 0 && mBottomTotalUnconsumed > 0) {
+                if (dy > mBottomTotalUnconsumed) {
+                    consumed[1] = dy - (int) mBottomTotalUnconsumed;
+                    mBottomTotalUnconsumed = 0;
                 } else {
-//                    mTotalUnconsumed -= dy;
-                    caculeUnConsum(dy);
+                    caculeUnConsum(-dy);
                     consumed[1] = dy;
                 }
-                topRefrush.moveSpinner(mTotalUnconsumed);
+                bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
             }
         }
 
@@ -463,9 +415,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
             lastDy = dy;
         }
         if (dy != 0 && lastDy / dy != -1) {
-            mTotalUnconsumed -= (dy);
-            final int i = 5 * topRefrush.getTotalDragDistance();
-            mTotalUnconsumed = mTotalUnconsumed > i ? (int) (i) : mTotalUnconsumed;
+            mBottomTotalUnconsumed -= (dy);
+            final int i = 5 * bottomRefrush.getTotalDragDistance();
+            mBottomTotalUnconsumed = mBottomTotalUnconsumed > i ? (int) (i) : mBottomTotalUnconsumed;
         }
         lastDy = dy;
     }
@@ -481,9 +433,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         mNestedScrollInProgress = false;
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
-        if (mTotalUnconsumed > 0) {
-            finishSpinner(mTotalUnconsumed);
-            mTotalUnconsumed = 0;
+        if (mBottomTotalUnconsumed > 0) {
+            finishSpinner(mBottomTotalUnconsumed);
+            mBottomTotalUnconsumed = 0;
         }
         // Dispatch up our nested parent
         stopNestedScroll();
@@ -496,9 +448,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements AnimationCol
         dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
                 mParentOffsetInWindow);
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
-        if (dy < 0 && !canChildScrollUp()) {
-            mTotalUnconsumed += Math.abs(dy);
-            topRefrush.moveSpinner(mTotalUnconsumed);
+        if (dy >0 && !canChildScrollUp(1)) {
+            mBottomTotalUnconsumed += Math.abs(dy);
+            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
     }
 

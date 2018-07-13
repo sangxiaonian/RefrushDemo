@@ -7,36 +7,18 @@
     android:orientation="vertical"
     tools:context="sang.com.refrushdemo.MainActivity">
 
-   <sang.com.refrushdemo.SwipeRefreshLayout
-       android:layout_width="match_parent"
-       android:id="@+id/refresh"
-       android:visibility="gone"
-       android:layout_weight="1"
-       android:layout_height="0dp">
-       <android.support.v7.widget.RecyclerView
-           android:layout_width="match_parent"
-           android:id="@+id/rv1"
-           android:layout_height="match_parent"/>
-   </sang.com.refrushdemo.SwipeRefreshLayout>
-<TextView
-    android:layout_width="match_parent"
-    android:background="@color/colorPrimary"
-    android:layout_height="5dp" />
 
-
-    <sang.com.easyrefrush.RefrushLayoutView
-        android:layout_width="match_parent"
+    <sang.com.easyrefrush.XParallaxLayoutView
         android:id="@+id/xrefresh"
-        android:layout_weight="5"
-        android:layout_height="0dp">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
         <android.support.v7.widget.RecyclerView
-            android:layout_width="match_parent"
             android:id="@+id/rv"
-            android:layout_marginBottom="60dp"
-            android:layout_height="match_parent"/>
-    </sang.com.easyrefrush.RefrushLayoutView>
-
-
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="60dp" />
+    </sang.com.easyrefrush.XParallaxLayoutView>
 
 
 </LinearLayout>

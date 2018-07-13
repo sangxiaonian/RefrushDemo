@@ -54,7 +54,7 @@ public class BottomTopRefrushLayoutView extends BaseRefrushLayout implements Ani
 
     private String LOG_TAG = "XRefrush";
 
-    private OnRefreshListener mListener;
+
 
     private IRefrushView topRefrush,bottomRefrush;
     private AnimationCollection.IAnimationHelper topAnimationHelper,bottomAnimationHelper;
@@ -69,9 +69,6 @@ public class BottomTopRefrushLayoutView extends BaseRefrushLayout implements Ani
         initView(context, attrs);
     }
 
-    public void setOnRefreshListener(OnRefreshListener mListener) {
-        this.mListener = mListener;
-    }
 
     private void initView(Context context, AttributeSet attrs) {
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);

@@ -4,14 +4,18 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 
+import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
- * 作者： ${PING} on 2018/7/11.
- * 刷新控件
+ * 作者： ${PING} on 2018/7/12.
+ * 视差特效
  */
+
 public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
 
 
@@ -37,7 +41,13 @@ public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
     public void changValue(float offset) {
         bringToFront();
         helper.changValue(offset);
-        requestLayout();
+        ViewGroup.LayoutParams params = getLayoutParams();
+        params.height = getOriginalValue() + getCurrentValue();
+        JLog.i(params.height + "");
+        if (params.height < getOriginalValue()) {
+            params.height = getOriginalValue();
+        }
+
     }
 
     /**
@@ -51,33 +61,61 @@ public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
     }
 
     /**
-     * 开始进行滑动
+     * 手指滑动时候的处理
      *
-     * @param overscrollTop
+     * @param overscrollTop 手指滑动的总距离
      */
     @Override
     public int moveSpinner(float overscrollTop) {
-        if (getVisibility() != VISIBLE) {
+        final int targetY;
+
+        if (overscrollTop > 0) {//正常情况下的变化
+            targetY = helper.moveSpinner(overscrollTop);
+        } else {
+            targetY = (int) overscrollTop;
+        }
+        if (getVisibility()!=VISIBLE){
             setVisibility(VISIBLE);
         }
-        final int targetY = helper.moveSpinner(overscrollTop);
-        int i = targetY - getCurrentValue();
-        changValue(i);
+        changValue(targetY - getCurrentValue());
         return targetY;
     }
+
 
     @Override
     public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
-//        final int childTop = parentHeight - getCurrentValue() - getPaddingBottom() - circleHeight;
-//        final int childBottom = childTop + circleHeight;
+        final int childBottom;
 
-        final int childTop = 300;
-        final int childBottom = 400;
+        final int childTop = parentHeight - getCurrentValue();
+        childBottom = childTop - circleHeight;
+
 
         layout((parentWidth / 2 - circleWidth / 2), childTop,
                 (parentWidth / 2 + circleWidth / 2), childBottom);
+
+
+    }
+
+    /**
+     * 获取到头部类型
+     *
+     * @return 返回值为刷新控件类型
+     */
+    @Override
+    public EnumCollections.HeadStyle getHeadStyle() {
+        return EnumCollections.HeadStyle.REFRUSH;
+    }
+
+    /**
+     * 获取停止滑动头部，将滑动数据交个其他控件的最小值
+     *
+     * @return
+     */
+    @Override
+    public int getMinValueToScrollList() {
+        return 0;
 
     }
 
@@ -99,7 +137,6 @@ public class BottomRefrushView extends BaseRefrushView implements IRefrushView {
      */
     @Override
     public void animationToRefrush(int... value) {
-        animationHelper.animationToStart(getCurrentValue(), getTotalDragDistance());
+        animationHelper.animationToRefrush(getCurrentValue(), getOriginalValue());
     }
-
 }

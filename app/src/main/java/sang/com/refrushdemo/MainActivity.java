@@ -14,19 +14,16 @@ import java.util.List;
 
 import sang.com.easyrefrush.RefrushLayoutView;
 import sang.com.easyrefrush.inter.OnRefreshListener;
+import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private SwipeRefreshLayout refreshLayout;
-    private RefrushLayoutView refrushLayoutView;
+    private BaseRefrushLayout refrushLayoutView;
     private RecyclerView recyclerView;
-    private RecyclerView rv;
 
     private List<String> datas;
-    private List<String> datas1;
     private MyAdapter myAdapter;
-    private MyAdapter xAdapter;
 
 
     @Override
@@ -41,63 +38,36 @@ public class MainActivity extends AppCompatActivity {
 
     private void intData() {
         datas = new ArrayList<>();
-        datas1 = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 13; i++) {
             datas.add("测试数据" + i);
-            datas1.add("测试数据" + i);
         }
         myAdapter = new MyAdapter(datas);
-        xAdapter = new MyAdapter(datas1);
         recyclerView.setAdapter(myAdapter);
-        rv.setAdapter(xAdapter);
 
-        refrushLayoutView.setOnRefreshListener(new OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                refrushLayoutView.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        refrushLayoutView.finishRefrush();
-                    }
-                }, 1520);
-            }
-        });
+
 
     }
 
     private void initView() {
-        refreshLayout = findViewById(R.id.refresh);
         recyclerView = findViewById(R.id.rv);
         refrushLayoutView = findViewById(R.id.xrefresh);
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(manager);
 
-
-        rv = findViewById(R.id.rv1);
-        LinearLayoutManager mal = new LinearLayoutManager(this);
-        mal.setOrientation(LinearLayoutManager.VERTICAL);
-        rv.setLayoutManager(mal);
-
-        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        refrushLayoutView.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh() {
-
-                refreshLayout.postDelayed(new Runnable() {
+                recyclerView.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        int size = datas.size();
-                        for (int i = size; i < size + 1; i++) {
-                            datas.add("测试数据" + i);
-                        }
-                        myAdapter.notifyItemRangeChanged(size, datas.size());
-
-                        refreshLayout.setRefreshing(false);
-
+                        refrushLayoutView.finishRefrush();
                     }
-                }, 1000);
+                }, 1500);
             }
         });
+
+
     }
 
 
