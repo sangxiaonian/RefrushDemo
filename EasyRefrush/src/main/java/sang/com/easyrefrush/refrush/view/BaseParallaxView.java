@@ -3,39 +3,46 @@ package sang.com.easyrefrush.refrush.view;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.View;
 import android.view.ViewGroup;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrush.inter.IRefrushView;
+
 
 /**
- * 作者： ${PING} on 2018/7/16.
+ * 作者： ${PING} on 2018/7/12.
+ * 视差特效
+ *
+ *
  */
 
-public abstract class BaseRefrushView extends BasePickView {
-    public BaseRefrushView(Context context) {
-        super(context);
+public abstract class BaseParallaxView extends BasePickView implements IRefrushView {
+
+
+    public BaseParallaxView(Context context) {
+        this(context, null, 0);
     }
 
-    public BaseRefrushView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+    public BaseParallaxView(Context context, @Nullable AttributeSet attrs) {
+        this(context, attrs, 0);
     }
 
-    public BaseRefrushView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public BaseParallaxView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
+
 
     /**
      * 根据传入的值，更改此时view的状态
      *
-     * @param offset 此次操作造成的该变量
+     * @param offset
      */
     @Override
     public void changValue(float offset) {
         bringToFront();
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
-        params.height =   getCurrentValue();
+        params.height = getOriginalValue() + getCurrentValue();
         if (params.height <  getOriginalValue() ) {
             params.height =  getOriginalValue() ;
         }
@@ -46,9 +53,8 @@ public abstract class BaseRefrushView extends BasePickView {
      */
     @Override
     public void reset() {
-        setVisibility(View.GONE);
-        helper.reset();
-        changValue(helper.getCurrentValue());
+        requestLayout();
+
     }
 
     /**
@@ -65,21 +71,13 @@ public abstract class BaseRefrushView extends BasePickView {
         }else {
             targetY= (int) overscrollTop;
         }
-        if (getVisibility()!=VISIBLE){
-            setVisibility(VISIBLE);
-        }
         changValue(targetY - getCurrentValue());
         return targetY;
     }
 
-    /**
-     * 对对应的布局进行布置
-     *
-     * @param parentWidth
-     * @param parentHeight
-     */
     @Override
     public abstract void layoutChild(int parentWidth, int parentHeight) ;
+
     /**
      * 获取到头部类型
      *
@@ -87,8 +85,9 @@ public abstract class BaseRefrushView extends BasePickView {
      */
     @Override
     public EnumCollections.HeadStyle getHeadStyle() {
-        return EnumCollections.HeadStyle.REFRUSH;
+        return EnumCollections.HeadStyle.PARALLAX;
     }
+
     /**
      * 获取停止滑动头部，将滑动数据交个其他控件的最小值
      *
@@ -96,9 +95,11 @@ public abstract class BaseRefrushView extends BasePickView {
      */
     @Override
     public int getMinValueToScrollList() {
-        return 0;
-
+//        return -getOriginalValue();
+        return -getOriginalValue()/2;
     }
+
+
     /**
      * 移动到初始位置的动画，取消或者刷新完成后执行
      *
@@ -116,6 +117,6 @@ public abstract class BaseRefrushView extends BasePickView {
      */
     @Override
     public void animationToRefrush(int... value) {
-        animationHelper.animationToStart(getCurrentValue(), getOriginalValue());
+        animationHelper.animationToRefrush(getCurrentValue(), 0);
     }
 }

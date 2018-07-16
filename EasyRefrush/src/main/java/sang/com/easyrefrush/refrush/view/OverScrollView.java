@@ -16,7 +16,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
  * 弹性过量滑动
  */
 
-public class OverScrollView extends BaseRefrushView implements IRefrushView {
+public class OverScrollView extends BasePickView implements IRefrushView {
 
 
     public OverScrollView(Context context) {
