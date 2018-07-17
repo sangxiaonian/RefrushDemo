@@ -70,6 +70,7 @@ public abstract class BaseRefrushView extends BasePickView {
             setVisibility(VISIBLE);
         }
 
+
         changValue(targetY - getCurrentValue());
         return targetY;
     }

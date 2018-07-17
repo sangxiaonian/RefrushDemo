@@ -44,7 +44,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
             @Override
             public void run() {
                 if (getTotalDragDistance() == 0) {
-                    setTotalDragDistance((int) (getMeasuredHeight() * 1.6f));
+                    setTotalDragDistance((int) (getMeasuredHeight() * 3f));
                 }
                 if (getOriginalValue() == 0) {
                     setOriginalValue(getMeasuredHeight());

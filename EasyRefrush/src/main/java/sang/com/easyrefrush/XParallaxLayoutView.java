@@ -1,6 +1,7 @@
 package sang.com.easyrefrush;
 
 import android.content.Context;
+import android.os.SystemClock;
 import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
@@ -409,11 +410,12 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 
+
 //        //对于下拉刷新，如果处于初始位置
         if ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
                 || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
                 ) {
-            mTotalUnconsumed= caculeUnConsum(dy ,mTotalUnconsumed,topRefrush.getTotalDragDistance(),topRefrush.getMinValueToScrollList());
+            mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
             consumed[1] = dy;
             if (!isTop) {
                 isTop = true;
@@ -423,7 +425,7 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
                 || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
                 ) {
 
-            mBottomTotalUnconsumed= caculeUnConsum(-dy ,mBottomTotalUnconsumed,bottomRefrush.getTotalDragDistance(),bottomRefrush.getMinValueToScrollList());
+            mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
 
 
             consumed[1] = dy;
@@ -442,19 +444,25 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
     }
 
 
-
     private int lastDy;
 
-    private int caculeUnConsum(int dy, int caculeNum,int maxValue,int minValue) {
+    private int caculeUnConsum(int dy, int caculeNum, int maxValue, int minValue) {
         if (lastDy == 0) {
             lastDy = dy;
         }
-        if (dy != 0 && lastDy / dy != -1) {
+
+        if (lastDy * dy < 0) {
+            dy += lastDy;
+        }
+
+        if (dy != 0
+                && lastDy * dy > 0
+                ) {
             caculeNum -= (dy);
-            final int i =  topRefrush.getTotalDragDistance();
-            caculeNum =  caculeNum > i ? (i) :  caculeNum;
+            final int i = topRefrush.getTotalDragDistance();
+            caculeNum = caculeNum > i ? (i) : caculeNum;
             final int minValueToScrollList = topRefrush.getMinValueToScrollList();
-             caculeNum = caculeNum < minValueToScrollList ? minValueToScrollList :  caculeNum;
+            caculeNum = caculeNum < minValueToScrollList ? minValueToScrollList : caculeNum;
         }
         lastDy = dy;
         return caculeNum;
@@ -493,10 +501,10 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
                 mParentOffsetInWindow);
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
         if (dy < 0 && !canChildScrollUp(-1)) {
-            mTotalUnconsumed = caculeUnConsum(Math.abs(dy),mTotalUnconsumed,topRefrush.getTotalDragDistance(),topRefrush.getMinValueToScrollList());
+            mTotalUnconsumed = caculeUnConsum(Math.abs(dy), mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
             topRefrush.moveSpinner(mTotalUnconsumed);
         } else if (dy > 0 && !canChildScrollUp(1)) {
-            mBottomTotalUnconsumed =caculeUnConsum(-Math.abs(dy),mBottomTotalUnconsumed,bottomRefrush.getTotalDragDistance(),bottomRefrush.getMinValueToScrollList());
+            mBottomTotalUnconsumed = caculeUnConsum(-Math.abs(dy), mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
     }
