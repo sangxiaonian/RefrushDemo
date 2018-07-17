@@ -16,7 +16,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
  * 作者： ${PING} on 2018/7/12.
  */
 
- public abstract   class BasePickView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
+ public abstract class BasePickView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
     protected IRefrushView helper;
     protected AnimationCollection.IAnimationHelper animationHelper;
     protected EnumCollections.Loaction loaction= EnumCollections.Loaction.UP;

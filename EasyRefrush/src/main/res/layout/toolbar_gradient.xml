@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sang.com.easyrefrush.refrush.view.ToolBarParallaxView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="200dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#fedcba"
+        android:orientation="vertical">
+
+        <View
+            android:id="@+id/bg"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#abcdef" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_alignParentBottom="true"
+        android:background="#fff"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="120dp">
+    </RelativeLayout>
+
+
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:id="@+id/toolbar"
+        android:background="#fff"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:text="@string/app_name"
+            android:layout_height="wrap_content" />
+
+    </android.support.v7.widget.Toolbar>
+
+
+    <RelativeLayout
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="45dp">
+        <TextView
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:textColor="#ff0000"
+            android:text="@string/app_name"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+
+
+</sang.com.easyrefrush.refrush.view.ToolBarParallaxView>

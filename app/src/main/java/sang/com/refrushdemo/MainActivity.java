@@ -44,12 +44,14 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(myAdapter);
 
 
-
     }
 
     private void initView() {
         recyclerView = findViewById(R.id.rv);
         refrushLayoutView = findViewById(R.id.xrefresh);
+        View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
+        refrushLayoutView.setTopRefrushView(inflate);
+
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(manager);

@@ -47,6 +47,16 @@ public abstract  class BaseParallaxView extends BasePickView implements IRefrush
         if (params.height <  getOriginalValue() ) {
             params.height =  getOriginalValue() ;
         }
+        onViewSizeChange(getCurrentValue(),params.height);
+    }
+
+    /**
+     * 该控件变化监听
+     * @param currentValue 当前高度变化量
+     * @param height       控件高度
+     */
+    protected void onViewSizeChange(int currentValue, int height) {
+
     }
 
     /**
