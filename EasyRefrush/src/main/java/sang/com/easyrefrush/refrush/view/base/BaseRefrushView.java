@@ -1,4 +1,4 @@
-package sang.com.easyrefrush.refrush.view;
+package sang.com.easyrefrush.refrush.view.base;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/16.
@@ -35,9 +36,9 @@ public abstract class BaseRefrushView extends BasePickView {
         bringToFront();
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
-        params.height =   getCurrentValue();
-        if (params.height <  getOriginalValue() ) {
-            params.height =  getOriginalValue() ;
+        params.height = getCurrentValue();
+        if (params.height < getOriginalValue()) {
+            params.height = getOriginalValue();
         }
     }
 
@@ -60,14 +61,12 @@ public abstract class BaseRefrushView extends BasePickView {
     public int moveSpinner(float overscrollTop) {
         final int targetY;
 
-        if (overscrollTop>0) {//正常情况下的变化
-            targetY = helper.moveSpinner(overscrollTop);
-        }else {
-            targetY= (int) overscrollTop;
-        }
-        if (getVisibility()!=VISIBLE){
+        JLog.i(overscrollTop+">>>"+getCurrentValue());
+        targetY = helper.moveSpinner(overscrollTop);
+        if (getVisibility() != VISIBLE) {
             setVisibility(VISIBLE);
         }
+
         changValue(targetY - getCurrentValue());
         return targetY;
     }
@@ -79,7 +78,26 @@ public abstract class BaseRefrushView extends BasePickView {
      * @param parentHeight
      */
     @Override
-    public abstract void layoutChild(int parentWidth, int parentHeight) ;
+    public void layoutChild(int parentWidth, int parentHeight) {
+        final int circleWidth = getMeasuredWidth();
+        final int circleHeight = getMeasuredHeight();
+        final int childBottom;
+        final int childTop;
+        if (getLoaction() == EnumCollections.Loaction.UP) {
+            childTop = getCurrentValue() + getPaddingTop() - circleHeight;
+            childBottom = childTop + circleHeight;
+        } else {
+            childTop = parentHeight - getCurrentValue();
+            childBottom = childTop + circleHeight;
+
+        }
+        layout((parentWidth / 2 - circleWidth / 2), childTop,
+                (parentWidth / 2 + circleWidth / 2), childBottom);
+
+    }
+
+    ;
+
     /**
      * 获取到头部类型
      *
@@ -89,6 +107,7 @@ public abstract class BaseRefrushView extends BasePickView {
     public EnumCollections.HeadStyle getHeadStyle() {
         return EnumCollections.HeadStyle.REFRUSH;
     }
+
     /**
      * 获取停止滑动头部，将滑动数据交个其他控件的最小值
      *
@@ -99,6 +118,7 @@ public abstract class BaseRefrushView extends BasePickView {
         return 0;
 
     }
+
     /**
      * 移动到初始位置的动画，取消或者刷新完成后执行
      *

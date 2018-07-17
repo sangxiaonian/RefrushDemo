@@ -28,5 +28,11 @@ public class EnumCollections {
         REFRUSH
     }
 
+    /**
+     * 用来枚举布局为头布局还是脚布局，UP ，Down
+     */
+    public  enum Loaction{
+        UP,Down;
+    }
 
 }

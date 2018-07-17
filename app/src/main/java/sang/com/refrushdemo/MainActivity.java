@@ -12,7 +12,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import sang.com.easyrefrush.RefrushLayoutView;
 import sang.com.easyrefrush.inter.OnRefreshListener;
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 

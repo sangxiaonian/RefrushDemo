@@ -1,4 +1,4 @@
-package sang.com.easyrefrush.refrush.view;
+package sang.com.easyrefrush.refrush.view.base;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
@@ -16,9 +16,10 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
  * 作者： ${PING} on 2018/7/12.
  */
 
-  abstract class BasePickView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
+ public abstract   class BasePickView extends RelativeLayout implements IRefrushView,AnimationCollection.IAnimationHelper {
     protected IRefrushView helper;
     protected AnimationCollection.IAnimationHelper animationHelper;
+    protected EnumCollections.Loaction loaction= EnumCollections.Loaction.UP;
 
     public BasePickView(Context context) {
         this(context, null, 0);
@@ -101,6 +102,27 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
     public int getMinValueToScrollList() {
         return 0;
     }
+
+    /**
+     * 用来设置布局为头布局还是脚布局，UP ，Down
+     *
+     * @param loaction
+     */
+    @Override
+    public void setLoaction(EnumCollections.Loaction loaction) {
+        this.loaction=loaction;
+    }
+
+    /**
+     * 获取当前布局为头布局还是脚布局
+     *
+     * @return 默认为头布局
+     */
+    @Override
+    public EnumCollections.Loaction getLoaction() {
+        return loaction;
+    }
+
     @Override
     public EnumCollections.HeadStyle getHeadStyle() {
         return EnumCollections.HeadStyle.REFRUSH;

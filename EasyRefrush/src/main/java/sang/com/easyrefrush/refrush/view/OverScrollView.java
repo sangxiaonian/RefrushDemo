@@ -9,6 +9,7 @@ import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.helper.animation.AnimationRefrush;
 import sang.com.easyrefrush.refrush.helper.view.ViewHelper;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
+import sang.com.easyrefrush.refrush.view.base.BasePickView;
 
 
 /**
@@ -45,12 +46,6 @@ public class OverScrollView extends BasePickView implements IRefrushView {
         });
     }
 
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        setOriginalValue(0);
-    }
 
     /**
      * 根据传入的值，更改此时view的状态

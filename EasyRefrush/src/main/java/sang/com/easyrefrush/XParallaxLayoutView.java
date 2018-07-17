@@ -52,8 +52,6 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
     //触摸滑动时候的滑动比例
     private float DRAG_RATE = 0.5f;
 
-    private String LOG_TAG = "XRefrush";
-
 
     private View topRefrushView;//头部刷新控件
     private IRefrushView topRefrush;
@@ -421,7 +419,6 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
 //        //对于下拉刷新，如果处于初始位置
         if (invasive) {
 //            if (topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-            if (true) {
                 if ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
                         || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
                         ) {
@@ -442,7 +439,6 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
                     consumed[1] = dy;
                     bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                 }
-            }
         } else {
             if (dy > 0 && mTotalUnconsumed > 0) {
                 if (dy > mTotalUnconsumed) {
@@ -488,8 +484,9 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
         if (dy != 0 && lastDy / dy != -1) {
             mTotalUnconsumed -= (dy);
             final int i = 5 * topRefrush.getTotalDragDistance();
-            mTotalUnconsumed = mTotalUnconsumed > i ? (int) (i) : mTotalUnconsumed;
-            mTotalUnconsumed= mTotalUnconsumed<topRefrush.getMinValueToScrollList()?topRefrush.getMinValueToScrollList():mTotalUnconsumed;
+            mTotalUnconsumed = mTotalUnconsumed > i ?  (i) : mTotalUnconsumed;
+            final int minValueToScrollList = topRefrush.getMinValueToScrollList();
+            mTotalUnconsumed= mTotalUnconsumed<minValueToScrollList?minValueToScrollList:mTotalUnconsumed;
         }
         lastDy = dy;
     }

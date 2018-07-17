@@ -6,6 +6,7 @@ import android.animation.ValueAnimator;
 import android.view.animation.DecelerateInterpolator;
 
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
+import sang.com.easyrefrush.refrush.helper.animation.inter.DefaultAnimationListenerIml;
 import sang.com.easyrefrush.refrushutils.JLog;
 
 
@@ -13,7 +14,7 @@ import sang.com.easyrefrush.refrushutils.JLog;
  * 作者： ${PING} on 2018/7/12.
  */
 
-public class AnimationRefrush implements AnimationCollection.IAnimationHelper {
+public class AnimationRefrush extends DefaultAnimationHelper {
 
     private DecelerateInterpolator mDecelerateInterpolator;
     ValueAnimator animator;
@@ -99,4 +100,6 @@ public class AnimationRefrush implements AnimationCollection.IAnimationHelper {
     public void setAnimationListener(AnimationCollection.IAnimationListener listener) {
         mListener = listener;
     }
+
+
 }

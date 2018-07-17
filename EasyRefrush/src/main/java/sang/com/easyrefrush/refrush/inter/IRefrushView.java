@@ -77,4 +77,16 @@ public interface IRefrushView {
      */
     int getMinValueToScrollList();
 
+    /**
+     * 用来设置布局为头布局还是脚布局，UP ，Down
+     * @param loaction
+     */
+    void setLoaction(EnumCollections.Loaction loaction);
+
+    /**
+     * 获取当前布局为头布局还是脚布局
+     * @return 默认为头布局
+     */
+    EnumCollections.Loaction getLoaction( );
+
 }

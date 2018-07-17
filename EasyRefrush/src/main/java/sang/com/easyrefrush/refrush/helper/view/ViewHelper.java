@@ -134,5 +134,25 @@ public class ViewHelper implements IRefrushView {
         return 0;
     }
 
+    /**
+     * 用来设置布局为头布局还是脚布局，UP ，Down
+     *
+     * @param loaction
+     */
+    @Override
+    public void setLoaction(EnumCollections.Loaction loaction) {
+
+    }
+
+    /**
+     * 获取当前布局为头布局还是脚布局
+     *
+     * @return 默认为头布局
+     */
+    @Override
+    public EnumCollections.Loaction getLoaction() {
+        return null;
+    }
+
 
 }

@@ -1,4 +1,4 @@
-package sang.com.easyrefrush.refrush.view;
+package sang.com.easyrefrush.refrush.view.base;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -16,7 +17,7 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
  *
  */
 
-public abstract class BaseParallaxView extends BasePickView implements IRefrushView {
+public abstract  class BaseParallaxView extends BasePickView implements IRefrushView {
 
 
     public BaseParallaxView(Context context) {
@@ -76,7 +77,33 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
     }
 
     @Override
-    public abstract void layoutChild(int parentWidth, int parentHeight) ;
+    public  void layoutChild(int parentWidth, int parentHeight) {
+        final int circleWidth = getMeasuredWidth();
+        final int circleHeight = getMeasuredHeight();
+        final int childBottom;
+        final int childTop  ;
+
+        if (getLoaction().equals(EnumCollections.Loaction.Down)){
+            if (getCurrentValue() > 0) {
+                childBottom = parentHeight - getPaddingBottom();
+            } else {
+                childBottom = parentHeight - getPaddingBottom() - getCurrentValue();
+            }
+             childTop = childBottom - circleHeight;
+            layout((parentWidth / 2 - circleWidth / 2), childTop,
+                    (parentWidth / 2 + circleWidth / 2), childBottom);
+        }else {
+            if (getCurrentValue()>0) {
+                childTop=getPaddingTop();
+                childBottom=getCurrentValue() +childTop + getOriginalValue();
+            }else {
+                childTop=getPaddingTop()+getCurrentValue();
+                childBottom= childTop + getOriginalValue();
+            }
+            layout((parentWidth / 2 - circleWidth / 2),childTop ,
+                    (parentWidth / 2 + circleWidth / 2), childBottom);
+        }
+    };
 
     /**
      * 获取到头部类型
@@ -94,11 +121,7 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
      * @return
      */
     @Override
-    public int getMinValueToScrollList() {
-//        return -getOriginalValue();
-        return -getOriginalValue()/2;
-    }
-
+    public abstract int getMinValueToScrollList() ;
 
     /**
      * 移动到初始位置的动画，取消或者刷新完成后执行
@@ -119,4 +142,6 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
     public void animationToRefrush(int... value) {
         animationHelper.animationToRefrush(getCurrentValue(), 0);
     }
+
+
 }
