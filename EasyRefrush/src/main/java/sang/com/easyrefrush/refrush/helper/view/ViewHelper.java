@@ -89,7 +89,6 @@ public class ViewHelper implements IRefrushView {
      */
     @Override
     public int moveSpinner(float overscrollTop) {
-
         //拖拽距离到最大距离的百分比
         float originalDragPercent = overscrollTop / getTotalDragDistance();
         //确定百分比
@@ -106,6 +105,7 @@ public class ViewHelper implements IRefrushView {
         float extraMove = (slingshotDist) * tensionPercent * 2;
 
         int targetY = (int) ((slingshotDist * dragPercent) + extraMove);
+
         return targetY;
     }
 

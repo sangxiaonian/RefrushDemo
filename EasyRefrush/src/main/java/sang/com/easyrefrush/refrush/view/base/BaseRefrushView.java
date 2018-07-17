@@ -36,7 +36,7 @@ public abstract class BaseRefrushView extends BasePickView {
         bringToFront();
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
-        params.height = getCurrentValue();
+        params.height = getCurrentValue()>getOriginalValue()?getCurrentValue():getOriginalValue();
         if (params.height < getOriginalValue()) {
             params.height = getOriginalValue();
         }
@@ -61,7 +61,10 @@ public abstract class BaseRefrushView extends BasePickView {
     public int moveSpinner(float overscrollTop) {
         final int targetY;
 
-        JLog.i(overscrollTop+">>>"+getCurrentValue());
+        if (overscrollTop>getTotalDragDistance()){
+            JLog.e(overscrollTop+">>>"+getTotalDragDistance());
+        }
+
         targetY = helper.moveSpinner(overscrollTop);
         if (getVisibility() != VISIBLE) {
             setVisibility(VISIBLE);
@@ -84,10 +87,10 @@ public abstract class BaseRefrushView extends BasePickView {
         final int childBottom;
         final int childTop;
         if (getLoaction() == EnumCollections.Loaction.UP) {
-            childTop = getCurrentValue() + getPaddingTop() - circleHeight;
-            childBottom = childTop + circleHeight;
+            childBottom=getPaddingTop()+getCurrentValue();
+            childTop=childBottom-circleHeight;
         } else {
-            childTop = parentHeight - getCurrentValue();
+            childTop = parentHeight -getPaddingBottom()-getCurrentValue();
             childBottom = childTop + circleHeight;
 
         }

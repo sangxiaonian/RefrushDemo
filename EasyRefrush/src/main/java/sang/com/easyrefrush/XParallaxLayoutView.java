@@ -6,12 +6,10 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ListView;
 
-import sang.com.easyrefrush.inter.OnRefreshListener;
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
@@ -217,9 +215,6 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
         return mTarget.canScrollVertically(direction);
     }
 
-    public boolean canChildScrollUp() {
-        return canChildScrollUp(-1);
-    }
 
     //是否开始拖拽
     private boolean mIsBeingDragged;
@@ -230,67 +225,67 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
     //垂直方向手指触摸开始滑动时候的坐标位置
     private float mInitialMotionY;
 
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        final int action = ev.getActionMasked();
-
-        if (mInitialDownY == 0) {
-            mInitialDownY = ev.getRawY();
-        }
-
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-        //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
-        if (!isEnabled() || mReturningToStart || canChildScrollUp(-1)
-                || mRefreshing || mNestedScrollInProgress) {
-            // Fail fast if we're not in a state where a swipe is possible
-            return false;
-        }
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                topRefrush.reset();
-                mIsBeingDragged = false;
-
-                mInitialDownY = ev.getRawY();
-                break;
-
-            case MotionEvent.ACTION_MOVE: {
-
-                final float y = ev.getRawY();
-
-                JLog.d("ACTION_MOVE:" + y);
-
-                startDragging(y);
-
-                if (mIsBeingDragged) {
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    if (overscrollTop > 0) { //如果是向下滑动
-                        topRefrush.moveSpinner(overscrollTop);
-
-                    } else {
-                        return false;
-                    }
-                }
-                break;
-            }
-
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL: {
-                if (mIsBeingDragged) {
-                    final float y = ev.getRawY();
-                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-                    mIsBeingDragged = false;
-                    finishSpinner(overscrollTop);
-                }
-                mInitialDownY = 0;
-                return false;
-            }
-        }
-
-        return mIsBeingDragged;
-    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent ev) {
+//        final int action = ev.getActionMasked();
+//
+//        if (mInitialDownY == 0) {
+//            mInitialDownY = ev.getRawY();
+//        }
+//
+//        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
+//            mReturningToStart = false;
+//        }
+//        //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
+//        if (!isEnabled() || mReturningToStart || canChildScrollUp(-1)
+//                || mRefreshing || mNestedScrollInProgress) {
+//            // Fail fast if we're not in a state where a swipe is possible
+//            return false;
+//        }
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                topRefrush.reset();
+//                mIsBeingDragged = false;
+//
+//                mInitialDownY = ev.getRawY();
+//                break;
+//
+//            case MotionEvent.ACTION_MOVE: {
+//
+//                final float y = ev.getRawY();
+//
+//                JLog.d("ACTION_MOVE:" + y);
+//
+//                startDragging(y);
+//
+//                if (mIsBeingDragged) {
+//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
+//                    if (overscrollTop > 0) { //如果是向下滑动
+//                        topRefrush.moveSpinner(overscrollTop);
+//
+//                    } else {
+//                        return false;
+//                    }
+//                }
+//                break;
+//            }
+//
+//
+//            case MotionEvent.ACTION_UP:
+//            case MotionEvent.ACTION_CANCEL: {
+//                if (mIsBeingDragged) {
+//                    final float y = ev.getRawY();
+//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
+//                    mIsBeingDragged = false;
+//                    finishSpinner(overscrollTop);
+//                }
+//                mInitialDownY = 0;
+//                return false;
+//            }
+//        }
+//
+//        return mIsBeingDragged;
+//    }
 
     /**
      * 开始数值方向拖拽
@@ -307,7 +302,7 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
 
     private void finishSpinner(float overscrollTop) {
         if (isTop) {
-            if (overscrollTop > topRefrush.getTotalDragDistance() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+            if (overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                 //开始刷新动画
                 setRefreshing(true);
             } else {
@@ -315,7 +310,7 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
                 finishRefrush();
             }
         } else {
-            if (overscrollTop > bottomRefrush.getTotalDragDistance() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+            if (overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                 //开始刷新动画
                 setRefreshing(true);
             } else {
@@ -345,8 +340,6 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
             } else {
                 mRefreshing = refreshing;
                 bottomAnimationHelper.animationToRefrush();
-
-
             }
         }
     }
@@ -417,39 +410,27 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 
 //        //对于下拉刷新，如果处于初始位置
-        if (invasive) {
-//            if (topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                if ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
-                        || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
-                        ) {
-                    caculeUnConsum(dy);
-                    consumed[1] = dy;
-                    if (!isTop) {
-                        isTop = true;
-                    }
-                    topRefrush.moveSpinner(mTotalUnconsumed);
-                } else if ((dy > 0 && !canChildScrollUp(1))//如果是下拉操作，消耗掉所有的数据
-                        || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
-                        ) {
-                    caculeBottomUnConsum(-dy);
-
-                    if (isTop) {
-                        isTop = false;
-                    }
-                    consumed[1] = dy;
-                    bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-                }
-        } else {
-            if (dy > 0 && mTotalUnconsumed > 0) {
-                if (dy > mTotalUnconsumed) {
-                    consumed[1] = dy - (int) mTotalUnconsumed;
-                    mTotalUnconsumed = 0;
-                } else {
-                    caculeUnConsum(dy);
-                    consumed[1] = dy;
-                }
-                topRefrush.moveSpinner(mTotalUnconsumed);
+        if ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
+                || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
+                ) {
+            mTotalUnconsumed= caculeUnConsum(dy ,mTotalUnconsumed,topRefrush.getTotalDragDistance(),topRefrush.getMinValueToScrollList());
+            consumed[1] = dy;
+            if (!isTop) {
+                isTop = true;
             }
+            topRefrush.moveSpinner(mTotalUnconsumed);
+        } else if ((dy > 0 && !canChildScrollUp(1))//如果是下拉操作，消耗掉所有的数据
+                || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
+                ) {
+
+            mBottomTotalUnconsumed= caculeUnConsum(-dy ,mBottomTotalUnconsumed,bottomRefrush.getTotalDragDistance(),bottomRefrush.getMinValueToScrollList());
+
+
+            consumed[1] = dy;
+            if (isTop) {
+                isTop = false;
+            }
+            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
 
         final int[] parentConsumed = mParentScrollConsumed;
@@ -460,35 +441,23 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
 
     }
 
-    private void caculeBottomUnConsum(int dy) {
-        if (lastDy == 0) {
-            lastDy = dy;
-        }
-        if (dy != 0 && lastDy / dy != -1) {
-            mBottomTotalUnconsumed -= (dy);
-            final int i = 5 * bottomRefrush.getTotalDragDistance();
-            mBottomTotalUnconsumed = mBottomTotalUnconsumed > i ? (int) (i) : mBottomTotalUnconsumed;
-            final int minValueToScrollList = bottomRefrush.getMinValueToScrollList();
-            mBottomTotalUnconsumed = mBottomTotalUnconsumed < minValueToScrollList ? minValueToScrollList : mBottomTotalUnconsumed;
-        }
-        lastDy = dy;
-    }
 
 
     private int lastDy;
 
-    private void caculeUnConsum(int dy) {
+    private int caculeUnConsum(int dy, int caculeNum,int maxValue,int minValue) {
         if (lastDy == 0) {
             lastDy = dy;
         }
         if (dy != 0 && lastDy / dy != -1) {
-            mTotalUnconsumed -= (dy);
-            final int i = 5 * topRefrush.getTotalDragDistance();
-            mTotalUnconsumed = mTotalUnconsumed > i ?  (i) : mTotalUnconsumed;
+            caculeNum -= (dy);
+            final int i =  topRefrush.getTotalDragDistance();
+            caculeNum =  caculeNum > i ? (i) :  caculeNum;
             final int minValueToScrollList = topRefrush.getMinValueToScrollList();
-            mTotalUnconsumed= mTotalUnconsumed<minValueToScrollList?minValueToScrollList:mTotalUnconsumed;
+             caculeNum = caculeNum < minValueToScrollList ? minValueToScrollList :  caculeNum;
         }
         lastDy = dy;
+        return caculeNum;
     }
 
     @Override
@@ -512,7 +481,7 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
                 finishSpinner(mBottomTotalUnconsumed);
                 mBottomTotalUnconsumed = 0;
             }
-        }     // Dispatch up our nested parent
+        }
         stopNestedScroll();
         lastDy = 0;
     }
@@ -523,11 +492,11 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
         dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed,
                 mParentOffsetInWindow);
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
-        if (dy < 0 && !canChildScrollUp()) {
-            mTotalUnconsumed += Math.abs(dy);
+        if (dy < 0 && !canChildScrollUp(-1)) {
+            mTotalUnconsumed = caculeUnConsum(Math.abs(dy),mTotalUnconsumed,topRefrush.getTotalDragDistance(),topRefrush.getMinValueToScrollList());
             topRefrush.moveSpinner(mTotalUnconsumed);
         } else if (dy > 0 && !canChildScrollUp(1)) {
-            mBottomTotalUnconsumed += Math.abs(dy);
+            mBottomTotalUnconsumed =caculeUnConsum(-Math.abs(dy),mBottomTotalUnconsumed,bottomRefrush.getTotalDragDistance(),bottomRefrush.getMinValueToScrollList());
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
     }
