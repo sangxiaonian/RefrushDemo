@@ -450,11 +450,9 @@ public class XParallaxLayoutView extends BaseRefrushLayout implements AnimationC
         if (lastDy == 0) {
             lastDy = dy;
         }
-
         if (lastDy * dy < 0) {
             dy += lastDy;
         }
-
         if (dy != 0
                 && lastDy * dy > 0
                 ) {
