@@ -401,7 +401,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                 mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
 
             }
-
             consumed[1] = dy;
             if (!isTop) {
                 isTop = true;
@@ -440,6 +439,7 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         if (dy != 0
                 && lastDy * dy > 0
                 ) {
+
             caculeNum -= (dy);
             caculeNum = caculeNum > maxValue ? maxValue : (caculeNum < minValue ? minValue : caculeNum);
         }

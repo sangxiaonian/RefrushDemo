@@ -48,6 +48,12 @@ public class ToolBarParallaxView extends BaseParallaxView {
         });
     }
 
+
+    @Override
+    public int getTotalDragDistance() {
+        return (int) (getOriginalValue()*0.5f);
+    }
+
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
@@ -55,6 +61,24 @@ public class ToolBarParallaxView extends BaseParallaxView {
             final int childTop = (getPaddingTop() - getCurrentValue()) < 0 ? 0 : getPaddingTop() - getCurrentValue();
             toolbar.layout(getPaddingLeft(), childTop, getPaddingLeft() + toolbar.getMeasuredWidth(), childTop + toolbar.getMeasuredHeight());
         }
+    }
+
+
+    @Override
+    public int moveSpinner(float overscrollTop) {
+        final int targetY;
+
+
+        if (overscrollTop<=0){
+            targetY = (int) overscrollTop-getCurrentValue();
+        }else {
+            targetY= (int)(overscrollTop-getCurrentValue())/2;;
+        }
+
+        JLog.i(overscrollTop+">>>>"+getTotalDragDistance()+">>>"+getOriginalValue());
+
+        changValue(targetY );
+        return targetY;
     }
 
     /**

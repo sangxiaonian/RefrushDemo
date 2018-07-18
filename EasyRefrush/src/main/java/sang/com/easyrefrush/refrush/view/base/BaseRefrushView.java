@@ -37,9 +37,6 @@ public abstract class BaseRefrushView extends BasePickView {
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
         params.height = getCurrentValue()>getOriginalValue()?getCurrentValue():getOriginalValue();
-        if (params.height < getOriginalValue()) {
-            params.height = getOriginalValue();
-        }
     }
 
     /**

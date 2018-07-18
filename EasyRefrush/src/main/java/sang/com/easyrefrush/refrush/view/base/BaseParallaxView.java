@@ -108,15 +108,6 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
 
             childBottom = getCurrentValue() + getPaddingTop() + getOriginalValue();
             childTop = childBottom - circleHeight;
-//            if (getCurrentValue()>0) {
-//                childTop=getPaddingTop();
-//
-//
-//                childBottom=getCurrentValue() +childTop + getOriginalValue();
-//            }else {
-//                childTop=getPaddingTop()+getCurrentValue();
-//                childBottom= childTop + getOriginalValue();
-//            }
             layout((parentWidth / 2 - circleWidth / 2), childTop,
                     (parentWidth / 2 + circleWidth / 2), childBottom);
         }
