@@ -30,7 +30,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     /**
      * 是否是侵入式刷新布局
      */
-    private boolean invasive = true;
     private NestedScrollingParentHelper mNestedScrollingParentHelper;
     //触发正在刷新或者取消刷新时候，头部刷新控件正在原始位置
     private boolean mReturningToStart;
@@ -53,14 +52,8 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
 
     @Override
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
-
-//        topRefrushView = LayoutInflater.from(context).inflate(R.layout.toolbar_gradient, this, false);
-//        topRefrushView = LayoutInflater.from(context).inflate(R.layout.item_top, this, false);
-
         super.initView(context, attrs, defStyleAttr);
         mNestedScrollingParentHelper = new NestedScrollingParentHelper(this);
-        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
-        invasive = true;
 
     }
 
@@ -116,30 +109,23 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
             bottomRefrush.layoutChild(width, height);
         }
         final View child = mTarget;
-        if (invasive) {
-            final int childLeft = getPaddingLeft();
-            final int childTop;
-            if (topRefrushView != null) {
-                childTop = topRefrushView.getBottom();
-            } else {
-                childTop = getPaddingTop();
-            }
-            final int childWidth = width - getPaddingLeft() - getPaddingRight();
-            final int childBottom;
-
-            if (bottomRefrushView != null) {
-                childBottom = bottomRefrushView.getTop();
-            } else {
-                childBottom = height - getPaddingBottom();
-            }
-            child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
+        final int childLeft = getPaddingLeft();
+        final int childTop;
+        if (topRefrushView != null) {
+            childTop = topRefrushView.getBottom();
         } else {
-            final int childLeft = getPaddingLeft();
-            final int childTop = getPaddingTop();
-            final int childWidth = width - getPaddingLeft() - getPaddingRight();
-            final int childHeight = height - getPaddingTop() - getPaddingBottom();
-            child.layout(childLeft, childTop, childLeft + childWidth, childTop + childHeight);
+            childTop = getPaddingTop();
         }
+        final int childWidth = width - getPaddingLeft() - getPaddingRight();
+        final int childBottom;
+
+        if (bottomRefrushView != null) {
+            childBottom = bottomRefrushView.getTop();
+        } else {
+            childBottom = height - getPaddingBottom();
+        }
+        child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
+
     }
 
     /**
@@ -184,93 +170,9 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     }
 
 
-    //是否开始拖拽
-    private boolean mIsBeingDragged;
-    //触摸的位置
-    private float mInitialDownY;
-    //触摸滑动的最小距离
-    private int mTouchSlop;
-    //垂直方向手指触摸开始滑动时候的坐标位置
-    private float mInitialMotionY;
-
-//    @Override
-//    public boolean onTouchEvent(MotionEvent ev) {
-//        final int action = ev.getActionMasked();
-//
-//        if (mInitialDownY == 0) {
-//            mInitialDownY = ev.getRawY();
-//        }
-//
-//        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-//            mReturningToStart = false;
-//        }
-//        //如果正在滑动，正在刷新，或者取消刷新正在执行动画，在不可以再次刷新
-//        if (!isEnabled() || mReturningToStart || canChildScrollUp(-1)
-//                || mRefreshing || mNestedScrollInProgress) {
-//            // Fail fast if we're not in a state where a swipe is possible
-//            return false;
-//        }
-//        switch (ev.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                topRefrush.reset();
-//                mIsBeingDragged = false;
-//
-//                mInitialDownY = ev.getRawY();
-//                break;
-//
-//            case MotionEvent.ACTION_MOVE: {
-//
-//                final float y = ev.getRawY();
-//
-//                JLog.d("ACTION_MOVE:" + y);
-//
-//                startDragging(y);
-//
-//                if (mIsBeingDragged) {
-//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-//                    if (overscrollTop > 0) { //如果是向下滑动
-//                        topRefrush.moveSpinner(overscrollTop);
-//
-//                    } else {
-//                        return false;
-//                    }
-//                }
-//                break;
-//            }
-//
-//
-//            case MotionEvent.ACTION_UP:
-//            case MotionEvent.ACTION_CANCEL: {
-//                if (mIsBeingDragged) {
-//                    final float y = ev.getRawY();
-//                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
-//                    mIsBeingDragged = false;
-//                    finishSpinner(overscrollTop);
-//                }
-//                mInitialDownY = 0;
-//                return false;
-//            }
-//        }
-//
-//        return mIsBeingDragged;
-//    }
-
-    /**
-     * 开始数值方向拖拽
-     *
-     * @param y
-     */
-    private void startDragging(float y) {
-        final float yDiff = y - mInitialDownY;
-        if (yDiff > mTouchSlop && !mIsBeingDragged) {
-            mInitialMotionY = mInitialDownY + mTouchSlop;
-            mIsBeingDragged = true;
-        }
-    }
-
     private void finishSpinner(float overscrollTop) {
         if (isTop) {
-            if (mTotalUnconsumed>0) {
+            if (mTotalUnconsumed > 0) {
                 if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
                     setRefreshing(true);
@@ -278,14 +180,13 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                     //取消刷新动画
                     finishRefrush();
                 }
-                mTotalUnconsumed=0;
-            }else {
-                if (topRefrush!=null){
-                      topRefrush.onFinishSpinner(overscrollTop);
+            } else {
+                if (topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
+                    topRefrush.onFinishSpinner(overscrollTop);
                 }
             }
         } else {
-            if (mBottomTotalUnconsumed>0) {
+            if (mBottomTotalUnconsumed > 0) {
                 if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
                     setRefreshing(true);
@@ -293,9 +194,10 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                     //取消刷新动画
                     finishRefrush();
                 }
-                mBottomTotalUnconsumed=0;
-            }else {
-
+            } else {
+                if (bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
+                    bottomRefrush.onFinishSpinner(overscrollTop);
+                }
             }
         }
     }
@@ -362,15 +264,13 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         if (isTop) {
             if (topRefrush != null) {
                 topRefrush.changValue(animatedValue - topRefrush.getCurrentValue());
-                JLog.i(mTotalUnconsumed+">>>"+topRefrush.getCurrentValue());
-
-                mTotalUnconsumed=topRefrush.getCurrentValue();
+                mTotalUnconsumed = topRefrush.getCurrentValue();
 
             }
         } else {
             if (bottomRefrush != null) {
                 bottomRefrush.changValue(animatedValue - bottomRefrush.getCurrentValue());
-                mBottomTotalUnconsumed=bottomRefrush.getCurrentValue();
+                mBottomTotalUnconsumed = bottomRefrush.getCurrentValue();
             }
         }
     }
@@ -415,7 +315,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                 mTotalUnconsumed = topRefrush.getMinValueToScrollList();
             } else {
                 mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
-
             }
             consumed[1] = dy;
             if (!isTop) {
@@ -434,7 +333,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
             }
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
-
         final int[] parentConsumed = mParentScrollConsumed;
         if (dispatchNestedPreScroll(dx - consumed[0], dy - consumed[1], parentConsumed, null)) {
             consumed[0] += parentConsumed[0];
@@ -475,9 +373,9 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
         if (isTop) {
-                finishSpinner(mTotalUnconsumed);
+            finishSpinner(mTotalUnconsumed);
         } else {
-                finishSpinner(mBottomTotalUnconsumed);
+            finishSpinner(mBottomTotalUnconsumed);
         }
         stopNestedScroll();
         lastDy = 0;
