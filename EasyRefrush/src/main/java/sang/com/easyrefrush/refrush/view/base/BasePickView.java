@@ -55,8 +55,10 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
     }
 
 
+    @Override
+    public void onFinishSpinner(float overscrollTop) {
 
-
+    }
 
     @Override
     public int getOriginalValue() {

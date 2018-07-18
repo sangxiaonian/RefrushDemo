@@ -33,7 +33,6 @@ public class ViewHelper implements IRefrushView {
      */
     @Override
     public void reset() {
-        JLog.e("-------------------");
         mCurrentTargetOffsetTop = 0;
     }
 
@@ -128,6 +127,16 @@ public class ViewHelper implements IRefrushView {
 
 
         return targetY;
+    }
+
+    /**
+     * 手指离开屏幕
+     *
+     * @param overscrollTop
+     */
+    @Override
+    public void onFinishSpinner(float overscrollTop) {
+
     }
 
     @Override

@@ -76,14 +76,7 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
     @Override
     public int moveSpinner(float overscrollTop) {
         final int targetY;
-
-//        if (overscrollTop>0) {//正常情况下的变化
-//            targetY = helper.moveSpinner(overscrollTop);
-//        }else {
-//        }
-
         targetY = (int) overscrollTop;
-
         changValue(targetY - getCurrentValue());
         return targetY;
     }

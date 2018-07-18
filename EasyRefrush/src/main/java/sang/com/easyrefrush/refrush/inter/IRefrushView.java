@@ -58,6 +58,13 @@ public interface IRefrushView {
     int moveSpinner(float overscrollTop);
 
     /**
+     * 手指离开屏幕
+     * @param overscrollTop
+     */
+    void onFinishSpinner(float overscrollTop);
+
+
+    /**
      * 对对应的布局进行布置
      * @param parentWidth
      * @param parentHeight
