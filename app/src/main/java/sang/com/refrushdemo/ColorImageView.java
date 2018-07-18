@@ -41,23 +41,24 @@ public class ColorImageView extends android.support.v7.widget.AppCompatImageView
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         xfermode = new PorterDuffXfermode(PorterDuff.Mode.SRC_IN);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        mCurrentColor=Color.BLACK;
+        mCurrentColor=Color.RED;
     }
 
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (mCurrentColor!=0) {
             canvas.save();
             mPaint.setColor(mCurrentColor);
             mPaint.setXfermode(xfermode);
-
-            if (bitmap == null) {
-                bitmap = creatBitmap(canvas);
-            }
+            Bitmap bitmap = creatBitmap(canvas);
             canvas.drawBitmap(bitmap, 0, 0, mPaint);
             mPaint.setXfermode(null);
+            bitmap.recycle();
+            bitmap=null;
             canvas.restore();
+        }
     }
 
     public void setCurrentColor(int mCurrentColor) {
@@ -65,14 +66,12 @@ public class ColorImageView extends android.support.v7.widget.AppCompatImageView
         postInvalidate();
     }
 
-    private Bitmap bitmap;
 
     private Bitmap creatBitmap(Canvas canvas) {
         Bitmap bitmap = Bitmap.createBitmap(canvas.getWidth(), canvas.getHeight(), Bitmap.Config.ARGB_8888);
         Canvas newCanvas = new Canvas(bitmap);
         newCanvas.drawColor(mCurrentColor);
         newCanvas.setBitmap(null);
-        newCanvas = null;
         return bitmap;
 
     }
