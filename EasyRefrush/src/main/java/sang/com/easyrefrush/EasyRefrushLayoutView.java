@@ -11,6 +11,7 @@ import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -269,20 +270,32 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
 
     private void finishSpinner(float overscrollTop) {
         if (isTop) {
-            if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                //开始刷新动画
-                setRefreshing(true);
-            } else {
-                //取消刷新动画
-                finishRefrush();
+            if (mTotalUnconsumed>0) {
+                if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                    //开始刷新动画
+                    setRefreshing(true);
+                } else {
+                    //取消刷新动画
+                    finishRefrush();
+                }
+                mTotalUnconsumed=0;
+            }else {
+                if (topRefrush!=null){
+                      topRefrush.onFinishSpinner(overscrollTop);
+                }
             }
         } else {
-            if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                //开始刷新动画
-                setRefreshing(true);
-            } else {
-                //取消刷新动画
-                finishRefrush();
+            if (mBottomTotalUnconsumed>0) {
+                if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                    //开始刷新动画
+                    setRefreshing(true);
+                } else {
+                    //取消刷新动画
+                    finishRefrush();
+                }
+                mBottomTotalUnconsumed=0;
+            }else {
+
             }
         }
     }
@@ -349,10 +362,15 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         if (isTop) {
             if (topRefrush != null) {
                 topRefrush.changValue(animatedValue - topRefrush.getCurrentValue());
+                JLog.i(mTotalUnconsumed+">>>"+topRefrush.getCurrentValue());
+
+                mTotalUnconsumed=topRefrush.getCurrentValue();
+
             }
         } else {
             if (bottomRefrush != null) {
                 bottomRefrush.changValue(animatedValue - bottomRefrush.getCurrentValue());
+                mBottomTotalUnconsumed=bottomRefrush.getCurrentValue();
             }
         }
     }
@@ -388,12 +406,10 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 //        //对于下拉刷新，如果处于初始位置
-
         if (topRefrush != null
                 && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
                 || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
         )) {
-
             if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
                 consumed[1] = dy - (int) mTotalUnconsumed;
                 mTotalUnconsumed = topRefrush.getMinValueToScrollList();
@@ -459,15 +475,9 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
         if (isTop) {
-            if (mTotalUnconsumed > 0) {
                 finishSpinner(mTotalUnconsumed);
-                mTotalUnconsumed = 0;
-            }
         } else {
-            if (mBottomTotalUnconsumed > 0) {
                 finishSpinner(mBottomTotalUnconsumed);
-                mBottomTotalUnconsumed = 0;
-            }
         }
         stopNestedScroll();
         lastDy = 0;

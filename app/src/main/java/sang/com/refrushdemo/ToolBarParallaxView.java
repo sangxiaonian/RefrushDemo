@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
@@ -46,9 +45,9 @@ public class ToolBarParallaxView extends BaseParallaxView {
             @Override
             public void run() {
                 toolbar = findViewById(R.id.toolbar);
-                tvTitle=findViewById(R.id.tv_title);
+                tvTitle = findViewById(R.id.tv_title);
                 bgView = findViewById(R.id.bg);
-                imageView =findViewById(R.id.img);
+                imageView = findViewById(R.id.img);
                 bgHeight = bgView.getMeasuredHeight();
                 toolbar.setBackgroundColor(Color.TRANSPARENT);
             }
@@ -113,20 +112,16 @@ public class ToolBarParallaxView extends BaseParallaxView {
 
     @Override
     public void onFinishSpinner(float overscrollTop) {
-        super.onFinishSpinner(overscrollTop);
 
-        if (getCurrentValue() > 0) {
+        if (getCurrentValue() >= 0) {
             return;
         }
         final float correctValue = bgHeight - toolbar.getMeasuredHeight();
-        if (Math.abs(getCurrentValue())>correctValue) {
-            animationToStart();
-            animationHelper.animationToStart(getCurrentValue(),-getOriginalValue()+toolbar.getMeasuredHeight());
-        }else {
+        if (Math.abs(getCurrentValue()) > correctValue && Math.abs(getCurrentValue()) < Math.abs(getMinValueToScrollList())) {
+            animationHelper.animationToStart(getCurrentValue(), -getOriginalValue() + toolbar.getMeasuredHeight());
+        } else if (Math.abs(getCurrentValue()) < correctValue) {
             animationToStart();
         }
-
-
     }
 
     /**

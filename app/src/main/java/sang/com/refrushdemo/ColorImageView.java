@@ -73,7 +73,6 @@ public class ColorImageView extends android.support.v7.widget.AppCompatImageView
         newCanvas.drawColor(mCurrentColor);
         newCanvas.setBitmap(null);
         return bitmap;
-
     }
 
 }
