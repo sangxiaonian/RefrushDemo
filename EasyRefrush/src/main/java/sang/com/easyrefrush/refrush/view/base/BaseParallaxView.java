@@ -13,11 +13,9 @@ import sang.com.easyrefrush.refrushutils.JLog;
 /**
  * 作者： ${PING} on 2018/7/12.
  * 视差特效
- *
- *
  */
 
-public abstract  class BaseParallaxView extends BasePickView implements IRefrushView {
+public abstract class BaseParallaxView extends BasePickView implements IRefrushView {
 
 
     public BaseParallaxView(Context context) {
@@ -43,15 +41,17 @@ public abstract  class BaseParallaxView extends BasePickView implements IRefrush
         bringToFront();
         helper.changValue(offset);
         ViewGroup.LayoutParams params = getLayoutParams();
-        params.height = getOriginalValue() + getCurrentValue();
-        if (params.height <  getOriginalValue() ) {
-            params.height =  getOriginalValue() ;
+        int height = getOriginalValue() + getCurrentValue();
+        if (height < getOriginalValue()) {
+            height = getOriginalValue();
         }
-        onViewSizeChange(getCurrentValue(),params.height);
+        params.height = height;
+        onViewSizeChange(getCurrentValue(), params.height);
     }
 
     /**
      * 该控件变化监听
+     *
      * @param currentValue 当前高度变化量
      * @param height       控件高度
      */
@@ -77,58 +77,52 @@ public abstract  class BaseParallaxView extends BasePickView implements IRefrush
     public int moveSpinner(float overscrollTop) {
         final int targetY;
 
-        if (overscrollTop>0) {//正常情况下的变化
-            targetY = helper.moveSpinner(overscrollTop);
-        }else {
-            targetY= (int) overscrollTop;
-        }
-
-
-//        if (overscrollTop>getOriginalValue()){
-////            (mFrom + (int) ((endTarget - mFrom) * interpolatedTime))
-////            targetY=getOriginalValue()+(overscrollTop-getOriginalValue())*；
-//
-//            float pren = (getTotalDragDistance()-overscrollTop)/getTotalDragDistance();
-//            targetY= (int) (getOriginalValue()+(getTotalDragDistance()-getOriginalValue())*overscrollTop/getTotalDragDistance());
-//
-//
-//            targetY=getTotalDragDistance()-(getTotalDragDistance()-)
+//        if (overscrollTop>0) {//正常情况下的变化
+//            targetY = helper.moveSpinner(overscrollTop);
 //        }else {
-//            targetY= (int) overscrollTop;
 //        }
+
+        targetY = (int) overscrollTop;
 
         changValue(targetY - getCurrentValue());
         return targetY;
     }
 
     @Override
-    public  void layoutChild(int parentWidth, int parentHeight) {
+    public void layoutChild(int parentWidth, int parentHeight) {
         final int circleWidth = getMeasuredWidth();
         final int circleHeight = getMeasuredHeight();
         final int childBottom;
-        final int childTop  ;
+        final int childTop;
 
-        if (getLoaction().equals(EnumCollections.Loaction.Down)){
+        if (getLoaction().equals(EnumCollections.Loaction.Down)) {
             if (getCurrentValue() > 0) {
                 childBottom = parentHeight - getPaddingBottom();
             } else {
                 childBottom = parentHeight - getPaddingBottom() - getCurrentValue();
             }
-             childTop = childBottom - circleHeight;
+            childTop = childBottom - circleHeight;
             layout((parentWidth / 2 - circleWidth / 2), childTop,
                     (parentWidth / 2 + circleWidth / 2), childBottom);
-        }else {
-            if (getCurrentValue()>0) {
-                childTop=getPaddingTop();
-                childBottom=getCurrentValue() +childTop + getOriginalValue();
-            }else {
-                childTop=getPaddingTop()+getCurrentValue();
-                childBottom= childTop + getOriginalValue();
-            }
-            layout((parentWidth / 2 - circleWidth / 2),childTop ,
+        } else {
+
+            childBottom = getCurrentValue() + getPaddingTop() + getOriginalValue();
+            childTop = childBottom - circleHeight;
+//            if (getCurrentValue()>0) {
+//                childTop=getPaddingTop();
+//
+//
+//                childBottom=getCurrentValue() +childTop + getOriginalValue();
+//            }else {
+//                childTop=getPaddingTop()+getCurrentValue();
+//                childBottom= childTop + getOriginalValue();
+//            }
+            layout((parentWidth / 2 - circleWidth / 2), childTop,
                     (parentWidth / 2 + circleWidth / 2), childBottom);
         }
-    };
+    }
+
+    ;
 
     /**
      * 获取到头部类型
@@ -146,7 +140,7 @@ public abstract  class BaseParallaxView extends BasePickView implements IRefrush
      * @return
      */
     @Override
-    public abstract int getMinValueToScrollList() ;
+    public abstract int getMinValueToScrollList();
 
     /**
      * 移动到初始位置的动画，取消或者刷新完成后执行

@@ -129,7 +129,7 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
             if (bottomRefrushView != null) {
                 childBottom = bottomRefrushView.getTop();
             } else {
-                childBottom = height - getPaddingBottom() + childTop;
+                childBottom = height - getPaddingBottom();
             }
             child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
         } else {
@@ -304,14 +304,12 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     private void setRefreshing(boolean refreshing) {
         if (refreshing && mRefreshing != refreshing) {
             entryTargetView();
+            mRefreshing = refreshing;
             if (isTop) {
-                mRefreshing = refreshing;
                 if (topAnimationHelper != null) {
                     topAnimationHelper.animationToRefrush();
                 }
-
             } else {
-                mRefreshing = refreshing;
                 if (bottomAnimationHelper != null) {
                     bottomAnimationHelper.animationToRefrush();
                 }
@@ -396,8 +394,14 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                 || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
         )) {
 
+            if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+                consumed[1] = dy - (int) mTotalUnconsumed;
+                mTotalUnconsumed = topRefrush.getMinValueToScrollList();
+            } else {
+                mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
 
-            mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
+            }
+
             consumed[1] = dy;
             if (!isTop) {
                 isTop = true;
@@ -408,7 +412,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
                         ((dy > 0 && !canChildScrollUp(1))//如果是上滑操作，消耗掉所有的数据
                                 || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
                         )) {
-
             mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
             consumed[1] = dy;
             if (isTop) {
@@ -424,7 +427,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         }
 
     }
-
 
     private int lastDy;
 

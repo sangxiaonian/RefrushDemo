@@ -3,6 +3,7 @@ package sang.com.easyrefrush.refrush.helper.view;
 
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/12.
@@ -32,6 +33,7 @@ public class ViewHelper implements IRefrushView {
      */
     @Override
     public void reset() {
+        JLog.e("-------------------");
         mCurrentTargetOffsetTop = 0;
     }
 
