@@ -49,8 +49,12 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         recyclerView = findViewById(R.id.rv);
         refrushLayoutView = findViewById(R.id.xrefresh);
-        View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
+//        View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
+        View inflate = LayoutInflater.from(this).inflate(R.layout.item_top, refrushLayoutView, false);
         refrushLayoutView.setTopRefrushView(inflate);
+
+        View bottom = LayoutInflater.from(this).inflate(R.layout.item_bottom, refrushLayoutView, false);
+        refrushLayoutView.setBottomRefrushView(bottom);
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);

@@ -61,11 +61,14 @@ public abstract class BaseRefrushView extends BasePickView {
     public int moveSpinner(float overscrollTop) {
         final int targetY;
 
-        if (overscrollTop>getTotalDragDistance()){
-            JLog.e(overscrollTop+">>>"+getTotalDragDistance());
-        }
+//        targetY = helper.moveSpinner(overscrollTop);
 
-        targetY = helper.moveSpinner(overscrollTop);
+//        if (overscrollTop>getOriginalValue()) {
+//            targetY = (int) overscrollTop;
+//        }else {
+//            targetY=(overscrollTop-getOriginalValue())/(getTotalDragDistance())
+//        }
+        targetY = (int) overscrollTop;
         if (getVisibility() != VISIBLE) {
             setVisibility(VISIBLE);
         }

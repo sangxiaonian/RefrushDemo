@@ -89,14 +89,32 @@ public class ViewHelper implements IRefrushView {
      */
     @Override
     public int moveSpinner(float overscrollTop) {
+//        //拖拽距离到最大距离的百分比
+//        float originalDragPercent = overscrollTop / getTotalDragDistance();
+//        //确定百分比
+//        float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
+//        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
+//        float extraOS = Math.abs(overscrollTop) - getTotalDragDistance();
+//        //弹性距离
+//        float slingshotDist = getTotalDragDistance();
+//        float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
+//                / slingshotDist);
+//        float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
+//                (tensionSlingshotPercent / 4), 2)) * 2f;
+//
+//        float extraMove = (slingshotDist) * tensionPercent * 2;
+//
+//        int targetY = (int) ((slingshotDist * dragPercent) + extraMove);
+
+
         //拖拽距离到最大距离的百分比
-        float originalDragPercent = overscrollTop / getTotalDragDistance();
+        float originalDragPercent = overscrollTop / getOriginalValue();
         //确定百分比
         float dragPercent = Math.min(1f, Math.abs(originalDragPercent));
-        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
-        float extraOS = Math.abs(overscrollTop) - getTotalDragDistance();
+//        float adjustedPercent = (float) Math.max(dragPercent - .4, 0) * 5 / 3;
+        float extraOS = Math.abs(overscrollTop) - getOriginalValue();
         //弹性距离
-        float slingshotDist = getTotalDragDistance();
+        float slingshotDist = getTotalDragDistance()-getOriginalValue();
         float tensionSlingshotPercent = Math.max(0, Math.min(extraOS, slingshotDist * 2)
                 / slingshotDist);
         float tensionPercent = (float) ((tensionSlingshotPercent / 4) - Math.pow(
@@ -105,6 +123,7 @@ public class ViewHelper implements IRefrushView {
         float extraMove = (slingshotDist) * tensionPercent * 2;
 
         int targetY = (int) ((slingshotDist * dragPercent) + extraMove);
+
 
         return targetY;
     }

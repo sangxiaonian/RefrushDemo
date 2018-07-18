@@ -82,6 +82,21 @@ public abstract  class BaseParallaxView extends BasePickView implements IRefrush
         }else {
             targetY= (int) overscrollTop;
         }
+
+
+//        if (overscrollTop>getOriginalValue()){
+////            (mFrom + (int) ((endTarget - mFrom) * interpolatedTime))
+////            targetY=getOriginalValue()+(overscrollTop-getOriginalValue())*；
+//
+//            float pren = (getTotalDragDistance()-overscrollTop)/getTotalDragDistance();
+//            targetY= (int) (getOriginalValue()+(getTotalDragDistance()-getOriginalValue())*overscrollTop/getTotalDragDistance());
+//
+//
+//            targetY=getTotalDragDistance()-(getTotalDragDistance()-)
+//        }else {
+//            targetY= (int) overscrollTop;
+//        }
+
         changValue(targetY - getCurrentValue());
         return targetY;
     }
