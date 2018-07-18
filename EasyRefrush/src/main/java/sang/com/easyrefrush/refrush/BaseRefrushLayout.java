@@ -61,12 +61,30 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
 
     public abstract void finishRefrush();
 
-    public void setTopRefrushView(View topRefrushView) {
-        this.topRefrushView = topRefrushView;
-        if (topRefrushView==null){
-            return;
+    private boolean hasView(View view){
+        if (view==null){
+            return false;
         }
-        addView(topRefrushView);
+        for (int i = 0; i < getChildCount(); i++) {
+            if (getChildAt(i).equals(view)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void setTopRefrushView(View topRefrushView) {
+        if (this.topRefrushView!=null){
+            removeView(this.topRefrushView);
+        }
+
+        if (!hasView(topRefrushView)) {
+            addView(topRefrushView);
+        }
+
+
+        this.topRefrushView = topRefrushView;
+
         if (topRefrushView instanceof IRefrushView) {
             topRefrush = (IRefrushView) topRefrushView;
         }
@@ -77,11 +95,15 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     }
 
     public void setBottomRefrushView(View bottomRefrushView) {
-        this.bottomRefrushView = bottomRefrushView;
-        if (bottomRefrushView==null){
-            return;
+
+        if (this.bottomRefrushView!=null){
+            removeView(this.bottomRefrushView);
         }
-        addView(bottomRefrushView);
+        if (!hasView(bottomRefrushView)) {
+            addView(bottomRefrushView);
+        }
+        this.bottomRefrushView = bottomRefrushView;
+
         if (bottomRefrushView instanceof IRefrushView) {
             bottomRefrush = (IRefrushView) bottomRefrushView;
         }

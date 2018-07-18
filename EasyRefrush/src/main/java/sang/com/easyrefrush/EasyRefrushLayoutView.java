@@ -11,6 +11,7 @@ import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrush.view.base.BasePickView;
 import sang.com.easyrefrush.refrushutils.JLog;
 
 
@@ -134,24 +135,17 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     private void entryTargetView() {
         if (mTarget == null) {
             int childCount = getChildCount();
-            int basicCount = 0;
-            if (topRefrushView != null) {
-                basicCount++;
-            }
-            if (bottomRefrushView != null) {
-                basicCount++;
-            }
-            if (childCount == (basicCount + 1)) {//出了刷新控件外，至少要有一个子控件
-                for (int i = 0; i < childCount; i++) {
-                    View child = getChildAt(i);
-                    if (!child.equals(topRefrushView) && !child.equals(bottomRefrushView)) {
-                        mTarget = child;
-                        break;
-                    }
+            for (int i = 0; i < childCount; i++) {
+                View child = getChildAt(i);
+                if (child instanceof BasePickView && ((BasePickView) child).getLoaction() == EnumCollections.Loaction.UP) {
+                    setTopRefrushView(child);
+                } else if (child instanceof BasePickView && ((BasePickView) child).getLoaction() == EnumCollections.Loaction.Down) {
+                    setBottomRefrushView(child);
+                } else if (!child.equals(topRefrushView) && !child.equals(bottomRefrushView)) {
+                    mTarget = child;
                 }
-            } else {
-//                throw new RuntimeException(getClass().getName() + " can only be one childView");
             }
+
         }
     }
 

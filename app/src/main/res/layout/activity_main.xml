@@ -8,10 +8,13 @@
     tools:context="sang.com.refrushdemo.MainActivity">
 
 
+
     <sang.com.easyrefrush.EasyRefrushLayoutView
         android:id="@+id/xrefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <include layout="@layout/item_top"/>
+
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv"
