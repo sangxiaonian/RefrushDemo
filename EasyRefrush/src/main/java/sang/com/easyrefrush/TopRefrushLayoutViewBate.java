@@ -1,9 +1,7 @@
 package sang.com.easyrefrush;
 
 import android.content.Context;
-import android.os.Build;
 import android.support.v4.view.NestedScrollingParentHelper;
-import android.support.v4.view.ScrollingView;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
@@ -11,15 +9,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
-import android.widget.ScrollView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -27,7 +22,7 @@ import sang.com.easyrefrush.refrushutils.JLog;
  * 视差特效
  */
 
-public class RefrushLayoutViewBate extends BaseRefrushLayout {
+public class TopRefrushLayoutViewBate extends BaseRefrushLayout {
 
 
     /**
@@ -48,15 +43,15 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
     private float DRAG_RATE = 0.5f;
 
 
-    public RefrushLayoutViewBate(Context context) {
+    public TopRefrushLayoutViewBate(Context context) {
         super(context);
     }
 
-    public RefrushLayoutViewBate(Context context, AttributeSet attrs) {
+    public TopRefrushLayoutViewBate(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public RefrushLayoutViewBate(Context context, AttributeSet attrs, int defStyleAttr) {
+    public TopRefrushLayoutViewBate(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -90,6 +85,7 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
             measureChild(bottomRefrushView, widthMeasureSpec, heightMeasureSpec);
             targetHeight -= bottomRefrush.getCurrentValue();
         }
+
         //对子控件进行测量
         mTarget.measure(MeasureSpec.makeMeasureSpec(
                 targetWidth,
@@ -121,7 +117,7 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
         }
         final View child = mTarget;
         final int childLeft = getPaddingLeft();
-        int childTop;
+        final int childTop;
         if (topRefrushView != null) {
             childTop = topRefrushView.getBottom();
         } else {
@@ -132,13 +128,9 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
 
         if (bottomRefrushView != null) {
             childBottom = bottomRefrushView.getTop();
-            if (!isTop && mBottomTotalUnconsumed > 0) {
-                childTop = childTop - mBottomTotalUnconsumed;
-            }
         } else {
             childBottom = height - getPaddingBottom();
         }
-
         child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
 
     }
@@ -174,8 +166,6 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
         if (mTarget instanceof ListView) {
             return ListViewCompat.canScrollList((ListView) mTarget, direction);
         }
-
-
         return mTarget.canScrollVertically(direction);
     }
 
@@ -258,7 +248,9 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
                 mListener.onRefresh();
             }
         } else {
-            resetScroll();
+            if (topRefrush != null) {
+                topRefrush.reset();
+            }
         }
         mReturningToStart = false;
     }
@@ -272,16 +264,13 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
         if (isTop) {
             if (topRefrush != null) {
                 topRefrush.changValue(animatedValue - topRefrush.getCurrentValue());
-                if (mTotalUnconsumed!=0) {
-                    mTotalUnconsumed = topRefrush.getCurrentValue();
-                }
+                mTotalUnconsumed = topRefrush.getCurrentValue();
+
             }
         } else {
             if (bottomRefrush != null) {
                 bottomRefrush.changValue(animatedValue - bottomRefrush.getCurrentValue());
-                if (mBottomTotalUnconsumed!=0) {
-                    mBottomTotalUnconsumed = bottomRefrush.getCurrentValue();
-                }
+                mBottomTotalUnconsumed = bottomRefrush.getCurrentValue();
             }
         }
     }
@@ -307,13 +296,9 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
 
     private static final int INVALID_POINTER = -1;//无效触摸点
 
-
-    float change;
-
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         entryTargetView();
-
 
         final int action = ev.getActionMasked();
         int pointerIndex;
@@ -322,44 +307,15 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
             mReturningToStart = false;
         }
 
-//        JLog.i(canChildScrollUp(1)+"");
-        if (!isEnabled() || mReturningToStart
+        if (!isEnabled() || mReturningToStart || canChildScrollUp(-1)
                 || mRefreshing || mNestedScrollInProgress) {
-
-
-            if (action == MotionEvent.ACTION_DOWN) {
-                change = ev.getY();
-            } else {
-                final float y = ev.getY();
-                final float dy = -(y - change) * DRAG_RATE;//此处为了和nestScroll保持一致，取负值
-                change = y;
-                if ((dy < 0 && !canChildScrollUp(-1)&&mTarget.getTop()<0))//如果是想上滑动
-                {
-                    mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
-                    requestLayout();
-                }
-            }
             // Fail fast if we're not in a state where a swipe is possible
             return false;
-        } else {
-            if (action == MotionEvent.ACTION_DOWN) {
-                change = ev.getY();
-            } else {
-                final float y = ev.getY();
-                final float dy = -(y - change) * DRAG_RATE;//此处为了和nestScroll保持一致，取负值
-
-                final int scrollState = topCanScroll(dy);
-                change = y;
-                if (scrollState == 0)//如果是想上滑动
-                {
-                    return false;
-                }
-            }
         }
-
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                resetScroll();
                 mActivePointerId = ev.getPointerId(0);
                 mIsBeingDragged = false;
 
@@ -406,6 +362,13 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
         if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
             mReturningToStart = false;
         }
+
+        if (!isEnabled() || mReturningToStart || canChildScrollUp(-1)
+                || mRefreshing || mNestedScrollInProgress) {
+            // Fail fast if we're not in a state where a swipe is possible
+            return false;
+        }
+
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mActivePointerId = ev.getPointerId(0);
@@ -438,8 +401,7 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
                             isTop = false;
                         }
                         bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-
-                    } else {
+                    }else {
                         return false;
                     }
 
@@ -471,6 +433,7 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
 
                 if (mIsBeingDragged) {
                     final float y = ev.getY(pointerIndex);
+                    final float overscrollTop = (y - mInitialMotionY) * DRAG_RATE;
                     mIsBeingDragged = false;
                     if (isTop) {
                         finishSpinner(mTotalUnconsumed);
@@ -490,12 +453,8 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
 
     private void startDragging(float y) {
         final float yDiff = y - mInitialDownY;
-        if (Math.abs(yDiff) > mTouchSlop && !mIsBeingDragged) {
-            if (yDiff > 0) {
-                mInitialMotionY = mInitialDownY + mTouchSlop;
-            } else {
-                mInitialMotionY = mInitialDownY - mTouchSlop;
-            }
+        if (yDiff > mTouchSlop && !mIsBeingDragged) {
+            mInitialMotionY = mInitialDownY + mTouchSlop;
             mIsBeingDragged = true;
         }
     }
@@ -554,7 +513,6 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
      * @return
      */
     private int topCanScroll(float dy) {
-
         if (topRefrush != null && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
                 || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList()))) {
             return 1;
