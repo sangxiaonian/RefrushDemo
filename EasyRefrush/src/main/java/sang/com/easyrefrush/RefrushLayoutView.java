@@ -6,6 +6,7 @@ import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -295,6 +296,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     private boolean mIsBeingDragged;
     private float mInitialDownY;
     private float mInitialMotionY;
+    private int mActivePointerId;
 
     private static final int INVALID_POINTER = -1;//无效触摸点
 
@@ -331,15 +333,34 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             }
             return false;
         }
+
+          int pointerIndex;
+
+
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mIsBeingDragged = false;
                 intercept = false;
-                mInitialDownY = ev.getY();
+
+                mActivePointerId = ev.getPointerId(0);
+
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    return false;
+                }
+                mInitialDownY = ev.getY(pointerIndex);
+
                 break;
             case MotionEvent.ACTION_MOVE:
-
-                final float y = ev.getY();
+                if (mActivePointerId == INVALID_POINTER) {
+                    Log.e(LOG_TAG, "Got ACTION_MOVE event but don't have an active pointer id.");
+                    return false;
+                }
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    return false;
+                }
+                final float y = ev.getY(pointerIndex);
                 startDragging(y);//到此处，开始滑动
                 if (mIsBeingDragged) {//此时达到滑动距离
                     final float dy = y - mInitialMotionY;//此时滑动的真实距离
@@ -371,15 +392,31 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                     mInitialMotionY = y;
                 }
                 break;
+
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 mIsBeingDragged = false;
                 lastDy = 0;
                 intercept = false;
+                mActivePointerId = INVALID_POINTER;
                 break;
         }
         return intercept;
 
+    }
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        final int pointerIndex = ev.getActionIndex();
+        final int pointerId = ev.getPointerId(pointerIndex);
+        if (pointerId == mActivePointerId) {
+            // This was our active pointer going up. Choose a new
+            // active pointer and adjust accordingly.
+            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+        }
     }
 
 
@@ -390,12 +427,20 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
             mReturningToStart = false;
         }
+        int pointerIndex;
         switch (action) {
 
             case MotionEvent.ACTION_DOWN:
+                mActivePointerId = ev.getPointerId(0);
+                mIsBeingDragged = false;
                 return true;
             case MotionEvent.ACTION_MOVE: {
-                final float y = ev.getY();
+                  pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
+                    return false;
+                }
+                final float y = ev.getY(pointerIndex);
                 startDragging(y);//到此处，开始滑动
                 if (mIsBeingDragged) {
                     final float dy = (y - mInitialMotionY);//此处为了和nestScroll保持一致，取负值
@@ -429,21 +474,43 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                 }
                 break;
             }
-            case MotionEvent.ACTION_UP: {
+
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                pointerIndex = ev.getActionIndex();
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG,
+                            "Got ACTION_POINTER_DOWN event but have an invalid action index.");
+                    return false;
+                }
+                mActivePointerId = ev.getPointerId(pointerIndex);
+                mInitialDownY = ev.getY(pointerIndex);
+                mInitialMotionY = mInitialDownY;
+                mIsBeingDragged = false;
+                break;
+            }
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                break;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL: {
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    Log.e(LOG_TAG, "Got ACTION_UP event but don't have an active pointer id.");
+                    return false;
+                }
                 if (mIsBeingDragged) {
                     mIsBeingDragged = false;
-                    intercept = false;
                     if (isTop) {
                         finishSpinner(mTotalUnconsumed);
                     } else {
                         finishSpinner(mBottomTotalUnconsumed);
                     }
                 }
+                mActivePointerId = INVALID_POINTER;
+                lastDy = 0;
                 return false;
             }
-            case MotionEvent.ACTION_CANCEL:
-                intercept = false;
-                return false;
         }
 
         return mIsBeingDragged;
