@@ -6,23 +6,25 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
  * 作者： ${PING} on 2018/6/22.
- * 视差特效
+ * 支持NestedScrolling 的刷新控件
  */
 
-public class EasyRefrushLayoutView extends BaseRefrushLayout {
+public class NestedScrollRefrushLayoutView extends BaseRefrushLayout {
 
 
+    /**
+     * 目标View，通常为recycleView，listView等被刷新的控件
+     */
+    private View mTarget;
 
     /**
      * 是否是侵入式刷新布局
@@ -34,15 +36,15 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     private boolean mRefreshing;
 
 
-    public EasyRefrushLayoutView(Context context) {
+    public NestedScrollRefrushLayoutView(Context context) {
         super(context);
     }
 
-    public EasyRefrushLayoutView(Context context, AttributeSet attrs) {
+    public NestedScrollRefrushLayoutView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public EasyRefrushLayoutView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public NestedScrollRefrushLayoutView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -55,8 +57,7 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     }
 
 
-
-    /**
+ /**
      * 唯一的子控件是否可以继续滑动
      *
      * @param direction -1 ，可以向上滑动 1 向下滑动
@@ -181,7 +182,6 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     private boolean mNestedScrollInProgress;
     private int mTotalUnconsumed;
     private int mBottomTotalUnconsumed;
-
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         return isEnabled() && !mReturningToStart && !mRefreshing

@@ -61,6 +61,9 @@ public class RefrushLayoutViewBate extends BaseRefrushLayout {
     }
 
 
+
+
+
     @Override
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         super.initView(context, attrs, defStyleAttr);

@@ -6,27 +6,21 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
  * 作者： ${PING} on 2018/6/22.
- * 视差特效
+ * 支持NestedScrolling 的刷新控件
  */
 
-public class EasyRefrushLayoutView extends BaseRefrushLayout {
+public class TopRefrushLayoutView extends BaseRefrushLayout {
 
 
-
-    /**
-     * 是否是侵入式刷新布局
-     */
     private NestedScrollingParentHelper mNestedScrollingParentHelper;
     //触发正在刷新或者取消刷新时候，头部刷新控件正在原始位置
     private boolean mReturningToStart;
@@ -34,15 +28,15 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     private boolean mRefreshing;
 
 
-    public EasyRefrushLayoutView(Context context) {
+    public TopRefrushLayoutView(Context context) {
         super(context);
     }
 
-    public EasyRefrushLayoutView(Context context, AttributeSet attrs) {
+    public TopRefrushLayoutView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public EasyRefrushLayoutView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public TopRefrushLayoutView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
@@ -55,28 +49,12 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
     }
 
 
-
-    /**
-     * 唯一的子控件是否可以继续滑动
-     *
-     * @param direction -1 ，可以向上滑动 1 向下滑动
-     * @return true 表示可以滑动 false 表示不可以
-     */
-    public boolean canChildScrollUp(int direction) {
-
-        if (mTarget instanceof ListView) {
-            return ListViewCompat.canScrollList((ListView) mTarget, direction);
-        }
-        return mTarget.canScrollVertically(direction);
-    }
-
-
     private void finishSpinner(float overscrollTop) {
         if (isTop) {
             if (mTotalUnconsumed > 0) {
                 if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
-                    setRefreshing(true);
+                    setRefreshing();
                 } else {
                     //取消刷新动画
                     finishRefrush();
@@ -90,7 +68,7 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
             if (mBottomTotalUnconsumed > 0) {
                 if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
-                    setRefreshing(true);
+                    setRefreshing();
                 } else {
                     //取消刷新动画
                     finishRefrush();
@@ -117,9 +95,9 @@ public class EasyRefrushLayoutView extends BaseRefrushLayout {
         }
     }
 
-    private void setRefreshing(boolean refreshing) {
-        if (refreshing && mRefreshing != refreshing) {
-            mRefreshing = refreshing;
+    private void setRefreshing() {
+        if (!mRefreshing) {
+            mRefreshing = true;
             if (isTop) {
                 if (topAnimationHelper != null) {
                     topAnimationHelper.animationToRefrush();

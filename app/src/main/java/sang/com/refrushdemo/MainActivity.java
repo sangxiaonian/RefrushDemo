@@ -52,11 +52,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setNestedScrollingEnabled(false);
 
         refrushLayoutView = findViewById(R.id.xrefresh);
-//        View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
-//        refrushLayoutView.setTopRefrushView(inflate);
+        View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
+        refrushLayoutView.setTopRefrushView(inflate);
 
         View bottom = LayoutInflater.from(this).inflate(R.layout.item_bottom, refrushLayoutView, false);
         refrushLayoutView.setBottomRefrushView(bottom);
+
+
 
         LinearLayoutManager manager = new LinearLayoutManager(this);
         manager.setOrientation(LinearLayoutManager.VERTICAL);
