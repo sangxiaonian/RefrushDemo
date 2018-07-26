@@ -6,7 +6,6 @@ import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -16,7 +15,6 @@ import android.widget.ListView;
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -313,30 +311,24 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {//如果动画正在执行，进行处理
             mReturningToStart = false;
         }
-
         if (!isEnabled() || mRefreshing || mReturningToStart) {//如果此时正在刷新，或者控件处于UNEnable状态，则直接返回false，不去操作控件，交个子控件进行处理
             if (mRefreshing && !isTop && bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
-                        change = ev.getY();
+                        change = ev.getRawY();
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        final float y = ev.getY();
+                        final float y = ev.getRawY();
                         final float dy = (y - change);//此处为了和nestScroll保持一致，取负值
                         change = y;
                         if (dy > 0 && !canChildScrollUp(-1)) {//向下滑动
                             //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
                             bottomRefrushMove(-dy);
                             requestLayout();
-                        } else if (dy < 0 && !canChildScrollUp(1)) {
-                            bottomRefrushMove(dy);
-                            requestLayout();
                         }
                         break;
                 }
-
             }
-
             return false;
         }
         switch (action) {
@@ -501,13 +493,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             mBottomTotalUnconsumed += (dy);
             mBottomTotalUnconsumed = mBottomTotalUnconsumed > bottomRefrush.getTotalDragDistance() ? bottomRefrush.getTotalDragDistance() :
                     (mBottomTotalUnconsumed < bottomRefrush.getMinValueToScrollList() ? bottomRefrush.getMinValueToScrollList() : mBottomTotalUnconsumed);
-
-
-//            mTarget.setTranslationY(-bottomRefrush.getCurrentValue());
-
-            JLog.i(mTarget.getMeasuredHeight() + ">>>" + mTarget.getTranslationY() + ">>>" + bottomRefrush.getCurrentValue());
-
-
         }
         lastDy = dy;
     }
