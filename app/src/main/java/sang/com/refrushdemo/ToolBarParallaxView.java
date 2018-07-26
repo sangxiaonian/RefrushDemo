@@ -41,6 +41,7 @@ public class ToolBarParallaxView extends BaseParallaxView {
     @Override
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         super.initView(context, attrs, defStyleAttr);
+        setNestedScrollingEnabled(true);
         post(new Runnable() {
             @Override
             public void run() {
@@ -113,15 +114,15 @@ public class ToolBarParallaxView extends BaseParallaxView {
     @Override
     public void onFinishSpinner(float overscrollTop) {
 
-        if (getCurrentValue() >= 0) {
-            return;
-        }
-        final float correctValue = bgHeight - toolbar.getMeasuredHeight();
-        if (Math.abs(getCurrentValue()) > correctValue && Math.abs(getCurrentValue()) < Math.abs(getMinValueToScrollList())) {
-            animationHelper.animationToStart(getCurrentValue(), -getOriginalValue() + toolbar.getMeasuredHeight());
-        } else if (Math.abs(getCurrentValue()) < correctValue) {
-            animationToStart();
-        }
+//        if (getCurrentValue() >= 0) {
+//            return;
+//        }
+//        final float correctValue = bgHeight - toolbar.getMeasuredHeight();
+//        if (Math.abs(getCurrentValue()) > correctValue && Math.abs(getCurrentValue()) < Math.abs(getMinValueToScrollList())) {
+//            animationHelper.animationToStart(getCurrentValue(), -getOriginalValue() + toolbar.getMeasuredHeight());
+//        } else if (Math.abs(getCurrentValue()) < correctValue) {
+//            animationToStart();
+//        }
     }
 
     /**

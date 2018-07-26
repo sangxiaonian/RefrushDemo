@@ -53,12 +53,6 @@ public interface IRefrushView {
      */
     int getCurrentValue();
 
-    /**
-     * 手指触摸屏幕，触发down事件
-     *
-     * @param overscrollTop 手指滑动的总距离
-     */
-    void startSpinner(float overscrollTop);
 
     /**
      * 手指滑动时候的处理，触发MOVE事件
@@ -73,13 +67,6 @@ public interface IRefrushView {
      * @param overscrollTop
      */
     void onFinishSpinner(float overscrollTop);
-
-    /**
-     * 手指离开屏幕，触发Up事件
-     *
-     * @param overscrollTop
-     */
-    void finishSpinner(float overscrollTop);
 
 
     /**

@@ -10,7 +10,6 @@ import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -18,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 
-import sang.com.easyrefrush.R;
 import sang.com.easyrefrush.inter.OnRefreshListener;
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
@@ -107,10 +105,10 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     }
 
 
-    private void finishSpinner(float overscrollTop) {
+    protected void finishSpinner() {
         if (isTop) {
             if (mTotalUnconsumed > 0) {
-                if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                if (topRefrush != null && mTotalUnconsumed > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
                     setRefreshing();
                 } else {
@@ -119,12 +117,12 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                 }
             } else {
                 if (topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    topRefrush.onFinishSpinner(overscrollTop);
+                    topRefrush.onFinishSpinner(mTotalUnconsumed);
                 }
             }
         } else {
             if (mBottomTotalUnconsumed > 0) {
-                if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
                     //开始刷新动画
                     setRefreshing();
                 } else {
@@ -133,7 +131,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                 }
             } else {
                 if (bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    bottomRefrush.onFinishSpinner(overscrollTop);
+                    bottomRefrush.onFinishSpinner(mBottomTotalUnconsumed);
                 }
             }
         }
@@ -337,13 +335,13 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     }
 
     //滑动
-    private boolean mIsBeingDragged;
-    private float mInitialDownY;
-    private float mInitialMotionY;
-    private int mActivePointerId;
-    private static final int INVALID_POINTER = -1;//无效触摸点
-    private boolean intercept;
-    private float change;
+    protected boolean mIsBeingDragged;
+    protected float mInitialDownY;
+    protected float mInitialMotionY;
+    protected int mActivePointerId;
+    protected static final int INVALID_POINTER = -1;//无效触摸点
+    protected boolean intercept;
+    protected float change;
 
     private void startDragging(float y) {
         final float yDiff = y - mInitialDownY;
@@ -554,9 +552,9 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                 if (mIsBeingDragged) {
                     mIsBeingDragged = false;
                     if (isTop) {
-                        finishSpinner(mTotalUnconsumed);
+                        finishSpinner();
                     } else {
-                        finishSpinner(mBottomTotalUnconsumed);
+                        finishSpinner();
                     }
                 }
                 mActivePointerId = INVALID_POINTER;
@@ -625,17 +623,19 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
 
 
     //数据计算
-    private float lastDy;
+    protected float lastDy;
 
     /**
      * 移动头部数据
      *
      * @param dy
      */
-    private void topRefrushMove(float dy) {
+    protected void topRefrushMove(float dy) {
         if (!isTop) {
             isTop = true;
         }
+        JLog.e(dy+"++++"+lastDy);
+
         if (lastDy == 0) {
             lastDy = dy;
         }
@@ -645,6 +645,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (topRefrush != null && dy != 0 && lastDy * dy > 0) {
 
             mTotalUnconsumed += (dy);
+            JLog.e(mTotalUnconsumed+">>>>"+dy);
             mTotalUnconsumed = mTotalUnconsumed > topRefrush.getTotalDragDistance() ? topRefrush.getTotalDragDistance() :
                     (mTotalUnconsumed < topRefrush.getMinValueToScrollList() ? topRefrush.getMinValueToScrollList() : mTotalUnconsumed);
             topRefrush.moveSpinner(mTotalUnconsumed);
@@ -657,7 +658,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
      *
      * @param dy
      */
-    private void bottomRefrushMove(float dy) {
+    protected void bottomRefrushMove(float dy) {
         if (isTop) {
             isTop = false;
         }
@@ -705,8 +706,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 //        //对于下拉刷新，如果处于初始位置
-
-        JLog.i("dy:"+dy);
         if (topRefrush != null
                 && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
                 || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
@@ -756,9 +755,9 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
         if (isTop) {
-            finishSpinner(mTotalUnconsumed);
+            finishSpinner();
         } else {
-            finishSpinner(mBottomTotalUnconsumed);
+            finishSpinner();
         }
         stopNestedScroll();
         lastDy = 0;
@@ -771,14 +770,21 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                 mParentOffsetInWindow);
         final int dy = dyUnconsumed + mParentOffsetInWindow[1];
         if (topRefrush != null && dy < 0 && !canChildScrollUp(-1)) {
-//            mTotalUnconsumed = caculeUnConsum(dy, mTotalUnconsumed, topRefrush.getTotalDragDistance(), topRefrush.getMinValueToScrollList());
             topRefrushMove(-dy);
             topRefrush.moveSpinner(mTotalUnconsumed);
         } else if (bottomRefrush != null && dy > 0 && !canChildScrollUp(1)) {
-//            mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
             bottomRefrushMove(dy);
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
+    }
+
+
+
+
+    @Override
+    public boolean onNestedFling(View target, float velocityX, float velocityY,
+                                 boolean consumed) {
+        return dispatchNestedFling(velocityX, velocityY, consumed);
     }
 
 
@@ -828,11 +834,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         return dispatchNestedPreFling(velocityX, velocityY);
     }
 
-    @Override
-    public boolean onNestedFling(View target, float velocityX, float velocityY,
-                                 boolean consumed) {
-        return dispatchNestedFling(velocityX, velocityY, consumed);
-    }
 
     @Override
     public boolean dispatchNestedFling(float velocityX, float velocityY, boolean consumed) {

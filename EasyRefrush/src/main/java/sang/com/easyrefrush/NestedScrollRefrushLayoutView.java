@@ -71,37 +71,6 @@ public class NestedScrollRefrushLayoutView extends BaseRefrushLayout {
     }
 
 
-    private void finishSpinner(float overscrollTop) {
-        if (isTop) {
-            if (mTotalUnconsumed > 0) {
-                if (topRefrush != null && overscrollTop > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                    //开始刷新动画
-                    setRefreshing(true);
-                } else {
-                    //取消刷新动画
-                    finishRefrush();
-                }
-            } else {
-                if (topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    topRefrush.onFinishSpinner(overscrollTop);
-                }
-            }
-        } else {
-            if (mBottomTotalUnconsumed > 0) {
-                if (bottomRefrush != null && overscrollTop > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                    //开始刷新动画
-                    setRefreshing(true);
-                } else {
-                    //取消刷新动画
-                    finishRefrush();
-                }
-            } else {
-                if (bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    bottomRefrush.onFinishSpinner(overscrollTop);
-                }
-            }
-        }
-    }
 
     public void finishRefrush() {
         mRefreshing = false;
@@ -273,9 +242,9 @@ public class NestedScrollRefrushLayoutView extends BaseRefrushLayout {
         // Finish the spinner for nested scrolling if we ever consumed any
         // unconsumed nested scroll
         if (isTop) {
-            finishSpinner(mTotalUnconsumed);
+            finishSpinner();
         } else {
-            finishSpinner(mBottomTotalUnconsumed);
+            finishSpinner();
         }
         stopNestedScroll();
         lastDy = 0;
