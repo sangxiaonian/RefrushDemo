@@ -15,6 +15,7 @@ import android.widget.AbsListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
@@ -63,9 +64,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     //触摸事件分发拦截
     @Override
     public void requestDisallowInterceptTouchEvent(boolean b) {
-        // if this is a List < L or another view that doesn't support nested
-        // scrolling, ignore this request so that the vertical scroll event
-        // isn't stolen
+
         if ((Build.VERSION.SDK_INT < 21 && mTarget instanceof AbsListView)
                 || (mTarget != null && !ViewCompat.isNestedScrollingEnabled(mTarget))) {
             // Nope.
@@ -237,32 +236,36 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
 
         if (supportFling) {
-            if (!mReturningToStart&&topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
-                flingAnimation.setStartValue(mTotalUnconsumed)
-                        .setMaxValue(topRefrush.getOriginalValue())
-                        .setStartVelocity(-velocityY)
-                        .setMinValue(topRefrush.getMinValueToScrollList());
-                flingAnimation.start();
+            if (!mReturningToStart && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+                startFling(-velocityY, mTotalUnconsumed, topRefrush.getOriginalValue(), topRefrush.getMinValueToScrollList());
                 return true;
-            } else if (!mReturningToStart&&bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
-                flingAnimation.setStartValue(mBottomTotalUnconsumed)
-                        .setMaxValue(bottomRefrush.getTotalDragDistance())
-                        .setStartVelocity(velocityY)
-                        .setMinValue(bottomRefrush.getMinValueToScrollList());
-                flingAnimation.start();
+            } else if (!mReturningToStart && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+                startFling(velocityY, mBottomTotalUnconsumed, bottomRefrush.getOriginalValue(), bottomRefrush.getMinValueToScrollList());
                 return true;
             } else {
                 return super.onNestedPreFling(target, velocityX, velocityY);
             }
         } else {
 
-            if (!mReturningToStart&&topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+            if (!mReturningToStart && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
                 return true;
-            } else if (!mReturningToStart&&bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+            } else if (!mReturningToStart && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
                 return true;
             } else {
                 return super.onNestedPreFling(target, velocityX, velocityY);
             }
+        }
+    }
+
+    private void startFling(float velocityY, float startValue, float maxValue, float minValue) {
+
+        if (startValue < 0 && startValue > minValue) {
+            flingAnimation.cancel();
+            flingAnimation.setStartValue(startValue)
+                    .setMaxValue(0)
+                    .setStartVelocity(velocityY)
+                    .setMinValue(minValue);
+            flingAnimation.start();
         }
     }
 
@@ -274,9 +277,9 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
 
             return true;
         } else {
-            if (!mReturningToStart&&topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+            if (!mReturningToStart && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
                 return true;
-            } else if (!mReturningToStart&&bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+            } else if (!mReturningToStart && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
                 return true;
             } else {
                 return super.onNestedPreFling(target, velocityX, velocityY);
@@ -296,27 +299,28 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     public void onAnimationUpdate(DynamicAnimation animation, float animatedValue, float velocity) {
         if (isTop) {
             if (topRefrush != null) {
-                if (animatedValue >= topRefrush.getTotalDragDistance() || animatedValue <= topRefrush.getMinValueToScrollList()) {
+                if (animatedValue >= 0 || animatedValue <= topRefrush.getMinValueToScrollList()) {
                     flingAnimation.cancel();
-                    if (animatedValue >= topRefrush.getTotalDragDistance()) {
-                        mTotalUnconsumed = topRefrush.getTotalDragDistance();
-                        finishSpinner();
+                    if (animatedValue >= 0) {
+                        mTotalUnconsumed = 0;
+                        topRefrush.moveSpinner(mTotalUnconsumed);
                     } else if (animatedValue <= topRefrush.getMinValueToScrollList()) {
                         mTotalUnconsumed = topRefrush.getMinValueToScrollList();
                         topRefrush.moveSpinner(mTotalUnconsumed);
                     }
 
                 } else {
-                    topRefrushMove(animatedValue - mTotalUnconsumed);
+                    mTotalUnconsumed = (int) animatedValue;
+                    topRefrush.moveSpinner(mTotalUnconsumed);
                 }
             }
         } else {
             if (bottomRefrush != null) {
-                if (animatedValue >= bottomRefrush.getTotalDragDistance() || animatedValue <= bottomRefrush.getMinValueToScrollList()) {
+                if (animatedValue >= 0 || animatedValue <= bottomRefrush.getMinValueToScrollList()) {
                     flingAnimation.cancel();
-                    if (animatedValue >= bottomRefrush.getTotalDragDistance()) {
-                        mBottomTotalUnconsumed = bottomRefrush.getTotalDragDistance();
-                        finishSpinner();
+                    if (animatedValue >= 0) {
+                        mBottomTotalUnconsumed = 0;
+                        bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                     } else if (animatedValue <= bottomRefrush.getMinValueToScrollList()) {
                         mBottomTotalUnconsumed = bottomRefrush.getMinValueToScrollList();
                         bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
@@ -334,7 +338,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
 
     @Override
     public void onAnimationEnd(DynamicAnimation animation, boolean canceled, float value, float velocity) {
-        finishSpinner();
+//        finishSpinner();
         lastDy = 0;
         moveY = 0;
     }
@@ -350,6 +354,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     public boolean onDown(MotionEvent e) {
         if (flingAnimation.isRunning()) {
             flingAnimation.cancel();
+
         }
         moveY = 0;
         lastDy = 0;
@@ -397,7 +402,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
         }
         moveY = rawY;
         if (dy > 0) {//向下滑动
-            if (topRefrush!=null&&!canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
+            if (topRefrush != null && !canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
                 topRefrushMove(dy);
                 intercept = true;
             } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
@@ -409,7 +414,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
                 intercept = false;
             }
         } else if (dy < 0) {//向上滑动
-            if (bottomRefrush!=null&&!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
+            if (bottomRefrush != null && !canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
                 bottomRefrushMove(-dy);
                 bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                 intercept = true;
@@ -435,24 +440,18 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
         moveY = 0;
-        if (!mReturningToStart&&supportFling && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
-            flingAnimation.setStartValue(mTotalUnconsumed)
-                    .setMaxValue(topRefrush.getOriginalValue())
-                    .setStartVelocity(velocityY)
-                    .setMinValue(topRefrush.getMinValueToScrollList());
-            flingAnimation.start();
+        if (!mReturningToStart && supportFling && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+            startFling(velocityY, mTotalUnconsumed, topRefrush.getOriginalValue(), topRefrush.getMinValueToScrollList());
             return true;
-        } else if (!mReturningToStart&&supportFling && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
-            flingAnimation.setStartValue(mBottomTotalUnconsumed)
-                    .setMaxValue(bottomRefrush.getTotalDragDistance())
-                    .setStartVelocity(-velocityY)
-                    .setMinValue(bottomRefrush.getMinValueToScrollList());
-            flingAnimation.start();
+        } else if (!mReturningToStart && supportFling && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+
+            startFling(-velocityY, mBottomTotalUnconsumed, bottomRefrush.getOriginalValue(), bottomRefrush.getMinValueToScrollList());
+
             return true;
         } else {
-            if (!mReturningToStart&&topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+            if (!mReturningToStart && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
                 return true;
-            } else if (!mReturningToStart&&bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+            } else if (!mReturningToStart && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
                 return true;
             } else {
                 return false;

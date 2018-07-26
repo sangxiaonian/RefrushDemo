@@ -9,19 +9,15 @@ import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.ListView;
 
 import sang.com.easyrefrush.inter.OnRefreshListener;
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/11.
@@ -386,8 +382,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (!isTop) {
             isTop = true;
         }
-        JLog.e(dy + "++++" + lastDy);
-
         if (lastDy == 0) {
             lastDy = dy;
         }
@@ -395,9 +389,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
             dy += lastDy;
         }
         if (topRefrush != null && dy != 0 && lastDy * dy > 0) {
-
             mTotalUnconsumed += (dy);
-            JLog.e(mTotalUnconsumed + ">>>>" + dy);
             mTotalUnconsumed = mTotalUnconsumed > topRefrush.getTotalDragDistance() ? topRefrush.getTotalDragDistance() :
                     (mTotalUnconsumed < topRefrush.getMinValueToScrollList() ? topRefrush.getMinValueToScrollList() : mTotalUnconsumed);
             topRefrush.moveSpinner(mTotalUnconsumed);
