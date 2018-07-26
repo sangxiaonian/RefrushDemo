@@ -5,34 +5,29 @@ import android.os.Build;
 import android.support.animation.DynamicAnimation;
 import android.support.animation.FlingAnimation;
 import android.support.animation.FloatValueHolder;
-import android.support.v4.view.NestedScrollingParentHelper;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.widget.AbsListView;
-import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
-import sang.com.easyrefrush.refrush.view.base.BasePickView;
-import sang.com.easyrefrush.refrushutils.JLog;
 
 
 /**
  * 作者： ${PING} on 2018/6/22.
- * 视差特效
+ * 支持 5.0 一下的控件，并且支持惯性滑动
  */
 
-public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetector.OnGestureListener,DynamicAnimation.OnAnimationUpdateListener, DynamicAnimation.OnAnimationEndListener {
+public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetector.OnGestureListener, DynamicAnimation.OnAnimationUpdateListener, DynamicAnimation.OnAnimationEndListener {
 
 
     private FlingAnimation flingAnimation;
     private GestureDetector mGestureDetector;
+    protected boolean supportFling = true;
 
     public RefrushLayoutView(Context context) {
         super(context);
@@ -49,29 +44,183 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     @Override
     protected void initView(Context context, AttributeSet attrs, int defStyleAttr) {
         super.initView(context, attrs, defStyleAttr);
-        mGestureDetector=new GestureDetector(context,this);
+        mGestureDetector = new GestureDetector(context, this);
         flingAnimation = new FlingAnimation(new FloatValueHolder(0));
-//        flingAnimation.setFriction();
         flingAnimation.addUpdateListener(this);
         flingAnimation.addEndListener(this);
 
     }
 
+    /**
+     * 设置是否支持惯性滑动
+     *
+     * @param supportFling true 支持，false不支持
+     */
+    public void setSupportFling(boolean supportFling) {
+        this.supportFling = supportFling;
+    }
+
+    //触摸事件分发拦截
     @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (flingAnimation.isRunning()){
-            flingAnimation.cancel();
+    public void requestDisallowInterceptTouchEvent(boolean b) {
+        // if this is a List < L or another view that doesn't support nested
+        // scrolling, ignore this request so that the vertical scroll event
+        // isn't stolen
+        if ((Build.VERSION.SDK_INT < 21 && mTarget instanceof AbsListView)
+                || (mTarget != null && !ViewCompat.isNestedScrollingEnabled(mTarget))) {
+            // Nope.
+        } else {
+            super.requestDisallowInterceptTouchEvent(b);
         }
-        return super.onInterceptTouchEvent(ev);
+    }
+
+    //滑动
+    protected boolean mIsBeingDragged;
+    protected float mInitialDownY;
+    protected float mInitialMotionY;
+    protected int mActivePointerId;
+    protected static final int INVALID_POINTER = -1;//无效触摸点
+    protected boolean intercept;
+    protected float change;
+
+    private void startDragging(float y) {
+        final float yDiff = y - mInitialDownY;
+        if (Math.abs(yDiff) > mTouchSlop && !mIsBeingDragged) {
+            if (yDiff > 0) {
+                mInitialMotionY = mInitialDownY + mTouchSlop;
+            } else {
+                mInitialMotionY = mInitialDownY - mTouchSlop;
+            }
+            mIsBeingDragged = true;
+        }
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()){
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        entryTargetView();
+        if (flingAnimation.isRunning()) {
+            flingAnimation.cancel();
+        }
+        final int action = ev.getActionMasked();
+        if (mNestedScrollInProgress) {
+            return false;
+        }
+        if ((mReturningToStart && action == MotionEvent.ACTION_DOWN)) {//如果动画正在执行，进行处理
+            mReturningToStart = false;
+        }
+        if (!isEnabled() || mRefreshing || mReturningToStart) {//如果此时正在刷新，或者控件处于UNEnable状态，则直接返回false，不去操作控件，交个子控件进行处理
+            if (mRefreshing && !isTop && bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        change = ev.getRawY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        final float y = ev.getRawY();
+                        final float dy = (y - change);//此处为了和nestScroll保持一致，取负值
+                        change = y;
+                        if (dy > 0 && !canChildScrollUp(-1)) {//向下滑动
+                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
+                            bottomRefrushMove(-dy);
+                            requestLayout();
+                        }
+                        break;
+                }
+            }
+            return false;
+        }
+
+        int pointerIndex;
+
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                mIsBeingDragged = false;
+                intercept = false;
+
+                mActivePointerId = ev.getPointerId(0);
+
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    return false;
+                }
+                mInitialDownY = ev.getY(pointerIndex);
+
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mActivePointerId == INVALID_POINTER) {
+                    Log.e(LOG_TAG, "Got ACTION_MOVE event but don't have an active pointer id.");
+                    return false;
+                }
+                pointerIndex = ev.findPointerIndex(mActivePointerId);
+                if (pointerIndex < 0) {
+                    return false;
+                }
+                final float y = ev.getY(pointerIndex);
+                startDragging(y);//到此处，开始滑动
+                if (mIsBeingDragged) {//此时达到滑动距离
+                    final float dy = y - mInitialMotionY;//此时滑动的真实距离
+
+                    if (dy > 0) {//向下滑动
+                        if (!canChildScrollUp(-1)) {//此时控件无法向下滑动
+                            intercept = true;
+                            //自己消费触摸事件，不再向下传递
+                        } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
+                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
+                            intercept = true;
+                        } else {
+                            intercept = false;
+                        }
+                    } else if (dy < 0) {//向上滑动
+                        if (!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
+                            intercept = true;
+                        } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+                            intercept = true;
+                        } else {
+                            intercept = false;
+                        }
+                    } else {
+                        intercept = false;
+                    }
+                }
+                if (mIsBeingDragged && intercept) {
+                    mInitialMotionY = y;
+                }
+                break;
+
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                moveY=0;
-                lastDy=0;
+                mIsBeingDragged = false;
+                lastDy = 0;
+                intercept = false;
+                mActivePointerId = INVALID_POINTER;
+                break;
+        }
+        return intercept;
+
+    }
+
+    private void onSecondaryPointerUp(MotionEvent ev) {
+        final int pointerIndex = ev.getActionIndex();
+        final int pointerId = ev.getPointerId(pointerIndex);
+        if (pointerId == mActivePointerId) {
+            // This was our active pointer going up. Choose a new
+            // active pointer and adjust accordingly.
+            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
+            mActivePointerId = ev.getPointerId(newPointerIndex);
+        }
+    }
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                moveY = 0;
+                lastDy = 0;
                 if (isTop) {
                     finishSpinner();
                 } else {
@@ -87,34 +236,38 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     @Override
     public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
 
-        if (topRefrush!=null&&topRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
-            flingAnimation.setStartValue(mTotalUnconsumed)
-                    .setMaxValue( topRefrush.getOriginalValue())
-                    .setStartVelocity(-velocityY)
-                    .setMinValue(topRefrush.getMinValueToScrollList());
-            flingAnimation.start();
-            return true;
-        }else if (bottomRefrush!=null&&bottomRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&!isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
-            flingAnimation.setStartValue(mBottomTotalUnconsumed)
-                    .setMaxValue( bottomRefrush.getTotalDragDistance())
-                    .setStartVelocity(velocityY)
-                    .setMinValue(bottomRefrush.getMinValueToScrollList());
-            flingAnimation.start();
-            return true;
-        }else {
+        if (supportFling) {
+            if (topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+                flingAnimation.setStartValue(mTotalUnconsumed)
+                        .setMaxValue(topRefrush.getOriginalValue())
+                        .setStartVelocity(-velocityY)
+                        .setMinValue(topRefrush.getMinValueToScrollList());
+                flingAnimation.start();
+                return true;
+            } else if (bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+                flingAnimation.setStartValue(mBottomTotalUnconsumed)
+                        .setMaxValue(bottomRefrush.getTotalDragDistance())
+                        .setStartVelocity(velocityY)
+                        .setMinValue(bottomRefrush.getMinValueToScrollList());
+                flingAnimation.start();
+                return true;
+            } else {
+                return super.onNestedPreFling(target, velocityX, velocityY);
+            }
+        } else {
             return super.onNestedPreFling(target, velocityX, velocityY);
         }
     }
 
     @Override
     public boolean onNestedFling(View target, float velocityX, float velocityY, boolean consumed) {
-        if (topRefrush!=null&&topRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+        if (supportFling && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
             return true;
-        }else if (bottomRefrush!=null&&bottomRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&!isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+        } else if (supportFling && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
 
             return true;
-        }else {
-            return super.onNestedFling(target, velocityX, velocityY,consumed);
+        } else {
+            return super.onNestedFling(target, velocityX, velocityY, consumed);
         }
 
     }
@@ -122,40 +275,40 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     /**
      * Notifies the occurrence of another frame of the animation.
      *
-     * @param animation animation that the update listener is added to
-     * @param animatedValue     the current value of the animation
-     * @param velocity  the current velocity of the animation
+     * @param animation     animation that the update listener is added to
+     * @param animatedValue the current value of the animation
+     * @param velocity      the current velocity of the animation
      */
     @Override
     public void onAnimationUpdate(DynamicAnimation animation, float animatedValue, float velocity) {
         if (isTop) {
             if (topRefrush != null) {
-                if (animatedValue>=topRefrush.getTotalDragDistance()||animatedValue<=topRefrush.getMinValueToScrollList()){
+                if (animatedValue >= topRefrush.getTotalDragDistance() || animatedValue <= topRefrush.getMinValueToScrollList()) {
                     flingAnimation.cancel();
-                    if (animatedValue>=topRefrush.getTotalDragDistance()){
-                        mTotalUnconsumed=topRefrush.getTotalDragDistance();
+                    if (animatedValue >= topRefrush.getTotalDragDistance()) {
+                        mTotalUnconsumed = topRefrush.getTotalDragDistance();
                         finishSpinner();
-                    }else if (animatedValue<=topRefrush.getMinValueToScrollList()){
-                        mTotalUnconsumed=topRefrush.getMinValueToScrollList();
+                    } else if (animatedValue <= topRefrush.getMinValueToScrollList()) {
+                        mTotalUnconsumed = topRefrush.getMinValueToScrollList();
                         topRefrush.moveSpinner(mTotalUnconsumed);
                     }
 
-                }else {
-                    topRefrushMove(animatedValue-mTotalUnconsumed);
+                } else {
+                    topRefrushMove(animatedValue - mTotalUnconsumed);
                 }
             }
         } else {
             if (bottomRefrush != null) {
-                if (animatedValue>=bottomRefrush.getTotalDragDistance()||animatedValue<=bottomRefrush.getMinValueToScrollList()){
+                if (animatedValue >= bottomRefrush.getTotalDragDistance() || animatedValue <= bottomRefrush.getMinValueToScrollList()) {
                     flingAnimation.cancel();
-                    if (animatedValue>=bottomRefrush.getTotalDragDistance()){
-                        mBottomTotalUnconsumed=bottomRefrush.getTotalDragDistance();
+                    if (animatedValue >= bottomRefrush.getTotalDragDistance()) {
+                        mBottomTotalUnconsumed = bottomRefrush.getTotalDragDistance();
                         finishSpinner();
-                    }else if (animatedValue<=bottomRefrush.getMinValueToScrollList()){
-                        mBottomTotalUnconsumed=bottomRefrush.getMinValueToScrollList();
+                    } else if (animatedValue <= bottomRefrush.getMinValueToScrollList()) {
+                        mBottomTotalUnconsumed = bottomRefrush.getMinValueToScrollList();
                         bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                     }
-                }else {
+                } else {
                     mBottomTotalUnconsumed = (int) animatedValue;
                     bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
                 }
@@ -169,8 +322,8 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     @Override
     public void onAnimationEnd(DynamicAnimation animation, boolean canceled, float value, float velocity) {
         finishSpinner();
-        lastDy=0;
-        moveY=0;
+        lastDy = 0;
+        moveY = 0;
     }
 
     /**
@@ -185,12 +338,10 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
         if (flingAnimation.isRunning()) {
             flingAnimation.cancel();
         }
-        moveY=0;
+        moveY = 0;
         lastDy = 0;
         return true;
     }
-
-
 
 
     @Override
@@ -202,7 +353,6 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     public boolean onSingleTapUp(MotionEvent e) {
         return false;
     }
-
 
 
     private float moveY;
@@ -224,19 +374,15 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
      */
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-
-
         final float dy;
         float rawY = e2.getRawY();
-        if (moveY==0){
-            moveY= rawY;
+        if (moveY == 0) {
+            moveY = rawY;
             return true;
-        }else {
-            dy=-moveY+ rawY;
+        } else {
+            dy = -moveY + rawY;
         }
-        moveY=rawY;
-        JLog.i(dy+">>>"+moveY+">>>"+rawY+">>>>"+mTotalUnconsumed);
-
+        moveY = rawY;
         if (dy > 0) {//向下滑动
             if (!canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
                 topRefrushMove(dy);
@@ -268,8 +414,6 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
     }
 
 
-
-
     @Override
     public void onLongPress(MotionEvent e) {
 
@@ -277,22 +421,22 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        moveY=0;
-        if (topRefrush!=null&&topRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
+        moveY = 0;
+        if (supportFling && topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && isTop && mTotalUnconsumed > topRefrush.getMinValueToScrollList() && mTotalUnconsumed < topRefrush.getTotalDragDistance()) {
             flingAnimation.setStartValue(mTotalUnconsumed)
-                    .setMaxValue( topRefrush.getOriginalValue())
+                    .setMaxValue(topRefrush.getOriginalValue())
                     .setStartVelocity(velocityY)
                     .setMinValue(topRefrush.getMinValueToScrollList());
             flingAnimation.start();
             return true;
-        }else if (bottomRefrush!=null&&bottomRefrush.getHeadStyle()== EnumCollections.HeadStyle.PARALLAX&&!isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
+        } else if (supportFling && bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX && !isTop && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList() && mBottomTotalUnconsumed < bottomRefrush.getTotalDragDistance()) {
             flingAnimation.setStartValue(mBottomTotalUnconsumed)
-                    .setMaxValue( bottomRefrush.getTotalDragDistance())
+                    .setMaxValue(bottomRefrush.getTotalDragDistance())
                     .setStartVelocity(-velocityY)
                     .setMinValue(bottomRefrush.getMinValueToScrollList());
             flingAnimation.start();
             return true;
-        }else {
+        } else {
             return false;
         }
     }

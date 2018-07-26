@@ -129,6 +129,16 @@ public class ViewHelper implements IRefrushView {
     }
 
     /**
+     * 手指抬起时候UP事件触发
+     *
+     * @param overscrollTop
+     */
+    @Override
+    public void finishSpinner(float overscrollTop) {
+
+    }
+
+    /**
      * 手指离开屏幕
      *
      * @param overscrollTop

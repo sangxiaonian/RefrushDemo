@@ -25,6 +25,8 @@ import sang.com.easyrefrush.refrushutils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/11.
+ * <p>
+ * 支持5.0 以上 nestScrollEnable 为true 的控件
  */
 
 public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrollingParent, NestedScrollingChild, AnimationCollection.IAnimationListener {
@@ -107,34 +109,30 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
 
     protected void finishSpinner() {
         if (isTop) {
-            if (mTotalUnconsumed > 0) {
-                if (topRefrush != null && mTotalUnconsumed > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                    //开始刷新动画
-                    setRefreshing();
-                } else {
-                    //取消刷新动画
-                    finishRefrush();
-                }
+            if (topRefrush != null && mTotalUnconsumed > topRefrush.getOriginalValue() && topRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                //开始刷新动画
+                mRefreshing = true;
             } else {
-                if (topRefrush != null && topRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    topRefrush.onFinishSpinner(mTotalUnconsumed);
-                }
+                mRefreshing = false;
             }
+            if (topRefrush != null) {
+                topRefrush.finishSpinner(mTotalUnconsumed);
+            }
+
         } else {
-            if (mBottomTotalUnconsumed > 0) {
-                if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
-                    //开始刷新动画
-                    setRefreshing();
-                } else {
-                    //取消刷新动画
-                    finishRefrush();
-                }
+            if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getOriginalValue() && bottomRefrush.getHeadStyle().equals(EnumCollections.HeadStyle.REFRUSH)) {
+                //开始刷新动画
+                mRefreshing = true;
             } else {
-                if (bottomRefrush != null && bottomRefrush.getHeadStyle() == EnumCollections.HeadStyle.PARALLAX) {
-                    bottomRefrush.onFinishSpinner(mBottomTotalUnconsumed);
-                }
+                //取消刷新动画
+                mRefreshing = false;
+            }
+            if (bottomRefrush != null) {
+                bottomRefrush.finishSpinner(mBottomTotalUnconsumed);
             }
         }
+
+
     }
 
     public void finishRefrush() {
@@ -151,7 +149,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         }
     }
 
-    private void setRefreshing() {
+    public void setRefreshing() {
         if (!mRefreshing) {
             entryTargetView();
             mRefreshing = true;
@@ -305,11 +303,11 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (bottomRefrushView != null) {
             childBottom = bottomRefrushView.getTop();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (!isTop&&!mTarget.isNestedScrollingEnabled() && mBottomTotalUnconsumed > 0) {
+                if (!isTop && !mTarget.isNestedScrollingEnabled() && mBottomTotalUnconsumed > 0) {
                     childTop = childTop - mBottomTotalUnconsumed;
                 }
-            }else {
-                if (!isTop&& mBottomTotalUnconsumed > 0) {
+            } else {
+                if (!isTop && mBottomTotalUnconsumed > 0) {
                     childTop = childTop - mBottomTotalUnconsumed;
                 }
             }
@@ -318,252 +316,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         }
         child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
 
-    }
-
-    //触摸事件分发拦截
-    @Override
-    public void requestDisallowInterceptTouchEvent(boolean b) {
-        // if this is a List < L or another view that doesn't support nested
-        // scrolling, ignore this request so that the vertical scroll event
-        // isn't stolen
-        if ((Build.VERSION.SDK_INT < 21 && mTarget instanceof AbsListView)
-                || (mTarget != null && !ViewCompat.isNestedScrollingEnabled(mTarget))) {
-            // Nope.
-        } else {
-            super.requestDisallowInterceptTouchEvent(b);
-        }
-    }
-
-    //滑动
-    protected boolean mIsBeingDragged;
-    protected float mInitialDownY;
-    protected float mInitialMotionY;
-    protected int mActivePointerId;
-    protected static final int INVALID_POINTER = -1;//无效触摸点
-    protected boolean intercept;
-    protected float change;
-
-    private void startDragging(float y) {
-        final float yDiff = y - mInitialDownY;
-        if (Math.abs(yDiff) > mTouchSlop && !mIsBeingDragged) {
-            if (yDiff > 0) {
-                mInitialMotionY = mInitialDownY + mTouchSlop;
-            } else {
-                mInitialMotionY = mInitialDownY - mTouchSlop;
-            }
-            mIsBeingDragged = true;
-        }
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        entryTargetView();
-        final int action = ev.getActionMasked();
-        if (mNestedScrollInProgress) {
-            return false;
-        }
-        if ((mReturningToStart && action == MotionEvent.ACTION_DOWN)) {//如果动画正在执行，进行处理
-            mReturningToStart = false;
-        }
-        if (!isEnabled() || mRefreshing || mReturningToStart) {//如果此时正在刷新，或者控件处于UNEnable状态，则直接返回false，不去操作控件，交个子控件进行处理
-            if (mRefreshing && !isTop && bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN:
-                        change = ev.getRawY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        final float y = ev.getRawY();
-                        final float dy = (y - change);//此处为了和nestScroll保持一致，取负值
-                        change = y;
-                        if (dy > 0 && !canChildScrollUp(-1)) {//向下滑动
-                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
-                            bottomRefrushMove(-dy);
-                            requestLayout();
-                        }
-                        break;
-                }
-            }
-            return false;
-        }
-
-        int pointerIndex;
-
-
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                mIsBeingDragged = false;
-                intercept = false;
-
-                mActivePointerId = ev.getPointerId(0);
-
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    return false;
-                }
-                mInitialDownY = ev.getY(pointerIndex);
-
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (mActivePointerId == INVALID_POINTER) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but don't have an active pointer id.");
-                    return false;
-                }
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    return false;
-                }
-                final float y = ev.getY(pointerIndex);
-                startDragging(y);//到此处，开始滑动
-                if (mIsBeingDragged) {//此时达到滑动距离
-                    final float dy = y - mInitialMotionY;//此时滑动的真实距离
-
-                    if (dy > 0) {//向下滑动
-                        if (!canChildScrollUp(-1)) {//此时控件无法向下滑动
-                            intercept = true;
-                            ;
-                            ;//自己消费触摸事件，不再向下传递
-                        } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
-                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
-                            intercept = true;
-                        } else {
-                            intercept = false;
-                        }
-                    } else if (dy < 0) {//向上滑动
-                        if (!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
-                            intercept = true;
-                        } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
-                            intercept = true;
-                        } else {
-                            intercept = false;
-                        }
-                    } else {
-                        intercept = false;
-                    }
-                }
-                if (mIsBeingDragged && intercept) {
-                    mInitialMotionY = y;
-                }
-                break;
-
-            case MotionEvent.ACTION_POINTER_UP:
-                onSecondaryPointerUp(ev);
-                break;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                mIsBeingDragged = false;
-                lastDy = 0;
-                intercept = false;
-                mActivePointerId = INVALID_POINTER;
-                break;
-        }
-        return intercept;
-
-    }
-
-    private void onSecondaryPointerUp(MotionEvent ev) {
-        final int pointerIndex = ev.getActionIndex();
-        final int pointerId = ev.getPointerId(pointerIndex);
-        if (pointerId == mActivePointerId) {
-            // This was our active pointer going up. Choose a new
-            // active pointer and adjust accordingly.
-            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-            mActivePointerId = ev.getPointerId(newPointerIndex);
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        final int action = ev.getActionMasked();
-        if (mReturningToStart && action == MotionEvent.ACTION_DOWN) {
-            mReturningToStart = false;
-        }
-        int pointerIndex;
-        switch (action) {
-
-            case MotionEvent.ACTION_DOWN:
-                mActivePointerId = ev.getPointerId(0);
-                mIsBeingDragged = false;
-                return true;
-            case MotionEvent.ACTION_MOVE: {
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_MOVE event but have an invalid active pointer id.");
-                    return false;
-                }
-                final float y = ev.getY(pointerIndex);
-                startDragging(y);//到此处，开始滑动
-                if (mIsBeingDragged) {
-                    final float dy = (y - mInitialMotionY);//此处为了和nestScroll保持一致，取负值
-                    mInitialMotionY = y;
-                    if (dy > 0) {//向下滑动
-                        if (!canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
-                            topRefrushMove(dy);
-                            intercept = true;
-                        } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
-                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
-                            bottomRefrushMove(-dy);
-                            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-                            intercept = true;
-                        } else {
-                            intercept = false;
-                        }
-                    } else if (dy < 0) {//向上滑动
-                        if (!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
-                            bottomRefrushMove(-dy);
-                            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-                            intercept = true;
-                        } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
-                            topRefrushMove(dy);
-                            intercept = true;
-                        } else {
-                            intercept = false;
-                        }
-                    } else {
-                        intercept = false;
-                    }
-                }
-                break;
-            }
-
-            case MotionEvent.ACTION_POINTER_DOWN: {
-                pointerIndex = ev.getActionIndex();
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG,
-                            "Got ACTION_POINTER_DOWN event but have an invalid action index.");
-                    return false;
-                }
-                mActivePointerId = ev.getPointerId(pointerIndex);
-                mInitialDownY = ev.getY(pointerIndex);
-                mInitialMotionY = mInitialDownY;
-                mIsBeingDragged = false;
-                break;
-            }
-            case MotionEvent.ACTION_POINTER_UP:
-                onSecondaryPointerUp(ev);
-                break;
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL: {
-                pointerIndex = ev.findPointerIndex(mActivePointerId);
-                if (pointerIndex < 0) {
-                    Log.e(LOG_TAG, "Got ACTION_UP event but don't have an active pointer id.");
-                    return false;
-                }
-                if (mIsBeingDragged) {
-                    mIsBeingDragged = false;
-                    if (isTop) {
-                        finishSpinner();
-                    } else {
-                        finishSpinner();
-                    }
-                }
-                mActivePointerId = INVALID_POINTER;
-                lastDy = 0;
-                return false;
-            }
-        }
-
-        return mIsBeingDragged;
     }
 
 
@@ -634,7 +386,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (!isTop) {
             isTop = true;
         }
-        JLog.e(dy+"++++"+lastDy);
+        JLog.e(dy + "++++" + lastDy);
 
         if (lastDy == 0) {
             lastDy = dy;
@@ -645,7 +397,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (topRefrush != null && dy != 0 && lastDy * dy > 0) {
 
             mTotalUnconsumed += (dy);
-            JLog.e(mTotalUnconsumed+">>>>"+dy);
+            JLog.e(mTotalUnconsumed + ">>>>" + dy);
             mTotalUnconsumed = mTotalUnconsumed > topRefrush.getTotalDragDistance() ? topRefrush.getTotalDragDistance() :
                     (mTotalUnconsumed < topRefrush.getMinValueToScrollList() ? topRefrush.getMinValueToScrollList() : mTotalUnconsumed);
             topRefrush.moveSpinner(mTotalUnconsumed);
@@ -681,7 +433,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     private final int[] mParentScrollConsumed = new int[2];
     private final int[] mParentOffsetInWindow = new int[2];
     //是否处于嵌套滑动过程请
-    private boolean mNestedScrollInProgress;
+    protected boolean mNestedScrollInProgress;
 
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
@@ -777,8 +529,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }
     }
-
-
 
 
     @Override

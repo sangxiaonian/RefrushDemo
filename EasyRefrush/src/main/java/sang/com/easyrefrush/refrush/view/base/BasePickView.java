@@ -140,5 +140,14 @@ import sang.com.easyrefrush.refrush.inter.IRefrushView;
         animationHelper.setAnimationListener(listener);
     }
 
+    @Override
+    public void finishSpinner(float overscrollTop) {
 
+        if (getCurrentValue()>=getOriginalValue()){
+            animationToRefrush();
+        }else {
+            animationToStart();
+        }
+
+    }
 }

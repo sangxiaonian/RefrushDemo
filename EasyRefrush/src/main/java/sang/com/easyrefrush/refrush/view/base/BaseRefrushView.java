@@ -142,4 +142,6 @@ public abstract class BaseRefrushView extends BasePickView {
     public void animationToRefrush(int... value) {
         animationHelper.animationToStart(getCurrentValue(), getOriginalValue());
     }
+
+
 }

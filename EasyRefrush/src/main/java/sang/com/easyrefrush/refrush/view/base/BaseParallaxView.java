@@ -145,6 +145,13 @@ public abstract class BaseParallaxView extends BasePickView implements IRefrushV
     public void animationToRefrush(int... value) {
         animationHelper.animationToRefrush(getCurrentValue(), 0);
     }
+    @Override
+    public void finishSpinner(float overscrollTop) {
+        if (getCurrentValue()>0){
+            super.finishSpinner(overscrollTop);
+        }
 
+
+    }
 
 }
