@@ -405,7 +405,7 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
             if (topRefrush != null && !canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
                 topRefrushMove(dy);
                 intercept = true;
-            } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
+            } else if (canChildScrollUp(-1)&&bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
                 //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
                 bottomRefrushMove(-dy);
                 bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
@@ -414,14 +414,16 @@ public class RefrushLayoutView extends BaseRefrushLayout implements GestureDetec
                 intercept = false;
             }
         } else if (dy < 0) {//向上滑动
-            if (bottomRefrush != null && !canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
-                bottomRefrushMove(-dy);
-                bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-                intercept = true;
-            } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+
+
+           if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
                 topRefrushMove(dy);
                 intercept = true;
-            } else {
+            } else if (canChildScrollUp(-1)&&bottomRefrush != null && !canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
+               bottomRefrushMove(-dy);
+               bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+               intercept = true;
+           } else  {
                 intercept = false;
             }
         } else {

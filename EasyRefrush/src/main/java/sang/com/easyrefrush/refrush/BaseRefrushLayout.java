@@ -450,34 +450,83 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
 //        //对于下拉刷新，如果处于初始位置
-        if (topRefrush != null
-                && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
-                || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
-        )) {
-            if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
-                consumed[1] = dy - (int) mTotalUnconsumed;
-                mTotalUnconsumed = topRefrush.getMinValueToScrollList();
-            } else {
-                topRefrushMove(-dy);
+
+
+        if (dy<0){
+            if (topRefrush!=null&&!canChildScrollUp(-1)){
+                if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+                    consumed[1] = dy - (int) mTotalUnconsumed;
+                    mTotalUnconsumed = topRefrush.getMinValueToScrollList();
+                } else {
+                    topRefrushMove(-dy);
+                }
+                consumed[1] = dy;
+                if (!isTop) {
+                    isTop = true;
+                }
+                topRefrush.moveSpinner(mTotalUnconsumed);
+            }else if (bottomRefrush!=null&&mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()){
+                bottomRefrushMove(dy);
+                consumed[1] = dy;
+                if (isTop) {
+                    isTop = false;
+                }
+                bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
             }
-            consumed[1] = dy;
-            if (!isTop) {
-                isTop = true;
+
+        }else if (dy>0){
+            if (topRefrush!=null&&mTotalUnconsumed > topRefrush.getMinValueToScrollList()){
+                if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+                    consumed[1] = dy - (int) mTotalUnconsumed;
+                    mTotalUnconsumed = topRefrush.getMinValueToScrollList();
+                } else {
+                    topRefrushMove(-dy);
+                }
+                consumed[1] = dy;
+                if (!isTop) {
+                    isTop = true;
+                }
+                topRefrush.moveSpinner(mTotalUnconsumed);
+            }else if (bottomRefrush!=null&& !canChildScrollUp(1)){
+                bottomRefrushMove(dy);
+                consumed[1] = dy;
+                if (isTop) {
+                    isTop = false;
+                }
+                bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
             }
-            topRefrush.moveSpinner(mTotalUnconsumed);
-        } else if (
-                bottomRefrush != null &&
-                        ((dy > 0 && !canChildScrollUp(1))//如果是上滑操作，消耗掉所有的数据
-                                || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
-                        )) {
-//            mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
-            bottomRefrushMove(dy);
-            consumed[1] = dy;
-            if (isTop) {
-                isTop = false;
-            }
-            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+
         }
+
+
+//        if (topRefrush != null
+//                && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
+//                || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
+//        )) {
+//            if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
+//                consumed[1] = dy - (int) mTotalUnconsumed;
+//                mTotalUnconsumed = topRefrush.getMinValueToScrollList();
+//            } else {
+//                topRefrushMove(-dy);
+//            }
+//            consumed[1] = dy;
+//            if (!isTop) {
+//                isTop = true;
+//            }
+//            topRefrush.moveSpinner(mTotalUnconsumed);
+//        } else if (
+//                bottomRefrush != null &&
+//                        ((dy > 0 && !canChildScrollUp(1))//如果是上滑操作，消耗掉所有的数据
+//                                || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
+//                        )) {
+////            mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
+//            bottomRefrushMove(dy);
+//            consumed[1] = dy;
+//            if (isTop) {
+//                isTop = false;
+//            }
+//            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+//        }
         final int[] parentConsumed = mParentScrollConsumed;
         if (dispatchNestedPreScroll(dx - consumed[0], dy - consumed[1], parentConsumed, null)) {
             consumed[0] += parentConsumed[0];
