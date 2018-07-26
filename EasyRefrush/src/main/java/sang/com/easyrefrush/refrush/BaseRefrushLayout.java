@@ -18,6 +18,7 @@ import sang.com.easyrefrush.inter.OnRefreshListener;
 import sang.com.easyrefrush.refrush.helper.animation.inter.AnimationCollection;
 import sang.com.easyrefrush.refrush.inter.IRefrushView;
 import sang.com.easyrefrush.refrush.view.base.BasePickView;
+import sang.com.easyrefrush.refrushutils.JLog;
 
 /**
  * 作者： ${PING} on 2018/7/11.
@@ -307,6 +308,9 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                     childTop = childTop - mBottomTotalUnconsumed;
                 }
             }
+            if (!isTop && mBottomTotalUnconsumed > 0) {
+                childTop = childTop - mBottomTotalUnconsumed;
+            }
         } else {
             childBottom = height - getPaddingBottom();
         }
@@ -465,7 +469,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                     isTop = true;
                 }
                 topRefrush.moveSpinner(mTotalUnconsumed);
-            }else if (bottomRefrush!=null&&mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()){
+            }else if (canChildScrollUp(-1)&&bottomRefrush!=null&&mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()){
                 bottomRefrushMove(dy);
                 consumed[1] = dy;
                 if (isTop) {
@@ -475,6 +479,9 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
             }
 
         }else if (dy>0){
+
+            JLog.i(canChildScrollUp(-1)+"");
+
             if (topRefrush!=null&&mTotalUnconsumed > topRefrush.getMinValueToScrollList()){
                 if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
                     consumed[1] = dy - (int) mTotalUnconsumed;
@@ -487,7 +494,7 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
                     isTop = true;
                 }
                 topRefrush.moveSpinner(mTotalUnconsumed);
-            }else if (bottomRefrush!=null&& !canChildScrollUp(1)){
+            }else if (canChildScrollUp(-1)&&bottomRefrush!=null&& !canChildScrollUp(1)){
                 bottomRefrushMove(dy);
                 consumed[1] = dy;
                 if (isTop) {
@@ -498,35 +505,6 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
 
         }
 
-
-//        if (topRefrush != null
-//                && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
-//                || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList())//如果是想上滑动
-//        )) {
-//            if (dy > mTotalUnconsumed - topRefrush.getMinValueToScrollList() && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
-//                consumed[1] = dy - (int) mTotalUnconsumed;
-//                mTotalUnconsumed = topRefrush.getMinValueToScrollList();
-//            } else {
-//                topRefrushMove(-dy);
-//            }
-//            consumed[1] = dy;
-//            if (!isTop) {
-//                isTop = true;
-//            }
-//            topRefrush.moveSpinner(mTotalUnconsumed);
-//        } else if (
-//                bottomRefrush != null &&
-//                        ((dy > 0 && !canChildScrollUp(1))//如果是上滑操作，消耗掉所有的数据
-//                                || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
-//                        )) {
-////            mBottomTotalUnconsumed = caculeUnConsum(-dy, mBottomTotalUnconsumed, bottomRefrush.getTotalDragDistance(), bottomRefrush.getMinValueToScrollList());
-//            bottomRefrushMove(dy);
-//            consumed[1] = dy;
-//            if (isTop) {
-//                isTop = false;
-//            }
-//            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
-//        }
         final int[] parentConsumed = mParentScrollConsumed;
         if (dispatchNestedPreScroll(dx - consumed[0], dy - consumed[1], parentConsumed, null)) {
             consumed[0] += parentConsumed[0];
@@ -565,7 +543,8 @@ public abstract class BaseRefrushLayout extends ViewGroup implements NestedScrol
         if (topRefrush != null && dy < 0 && !canChildScrollUp(-1)) {
             topRefrushMove(-dy);
             topRefrush.moveSpinner(mTotalUnconsumed);
-        } else if (bottomRefrush != null && dy > 0 && !canChildScrollUp(1)) {
+
+        } else if (canChildScrollUp(-1)&&bottomRefrush != null && dy > 0 && !canChildScrollUp(1)) {
             bottomRefrushMove(dy);
             bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
         }

@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void intData() {
         datas = new ArrayList<>();
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < 1; i++) {
             datas.add("测试数据" + i);
         }
         myAdapter = new MyAdapter(datas);
