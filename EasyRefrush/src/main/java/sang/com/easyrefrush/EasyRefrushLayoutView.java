@@ -60,4 +60,12 @@ public class EasyRefrushLayoutView extends RefrushLayoutView {
     public void finishRefrush() {
         super.finishRefrush();
     }
+
+    /**
+     * 设置当前状态为刷新状态
+     */
+    @Override
+    public void setRefreshing() {
+        super.setRefreshing();
+    }
 }
