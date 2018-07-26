@@ -125,7 +125,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             childTop = getPaddingTop();
         }
         final int childWidth = width - getPaddingLeft() - getPaddingRight();
-        final int childBottom;
+        int childBottom;
 
         if (bottomRefrushView != null) {
             childBottom = bottomRefrushView.getTop();
@@ -135,7 +135,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         } else {
             childBottom = height - getPaddingBottom();
         }
-
         child.layout(childLeft, childTop, childLeft + childWidth, childBottom);
 
     }
@@ -171,8 +170,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         if (mTarget instanceof ListView) {
             return ListViewCompat.canScrollList((ListView) mTarget, direction);
         }
-
-
         return mTarget.canScrollVertically(direction);
     }
 
@@ -304,14 +301,10 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     private static final int INVALID_POINTER = -1;//无效触摸点
 
 
-    float change;
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        return super.dispatchTouchEvent(ev);
-    }
-
     private boolean intercept;
+
+
+    private float change;
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -322,52 +315,75 @@ public class RefrushLayoutView extends BaseRefrushLayout {
         }
 
         if (!isEnabled() || mRefreshing || mReturningToStart) {//如果此时正在刷新，或者控件处于UNEnable状态，则直接返回false，不去操作控件，交个子控件进行处理
+            if (mRefreshing && !isTop && bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        change = ev.getY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        final float y = ev.getY();
+                        final float dy = (y - change);//此处为了和nestScroll保持一致，取负值
+                        change = y;
+                        if (dy > 0 && !canChildScrollUp(-1)) {//向下滑动
+                            //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
+                            bottomRefrushMove(-dy);
+                            requestLayout();
+                        } else if (dy < 0 && !canChildScrollUp(1)) {
+                            bottomRefrushMove(dy);
+                            requestLayout();
+                        }
+                        break;
+                }
+
+            }
+
             return false;
         }
-        JLog.e(canChildScrollUp(1) + ">>" + canChildScrollUp(-1)+"??"+action+">>"+mIsBeingDragged);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mIsBeingDragged = false;
-                intercept=false;
+                intercept = false;
                 mInitialDownY = ev.getY();
                 break;
-
             case MotionEvent.ACTION_MOVE:
 
                 final float y = ev.getY();
                 startDragging(y);//到此处，开始滑动
-                JLog.e(canChildScrollUp(1) + ">>" + canChildScrollUp(-1));
                 if (mIsBeingDragged) {//此时达到滑动距离
                     final float dy = y - mInitialMotionY;//此时滑动的真实距离
 
                     if (dy > 0) {//向下滑动
                         if (!canChildScrollUp(-1)) {//此时控件无法向下滑动
-                            intercept=true;;;//自己消费触摸事件，不再向下传递
+                            intercept = true;
+                            ;
+                            ;//自己消费触摸事件，不再向下传递
                         } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
                             //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
-                            intercept=true;
-                        }else {
-                            intercept=false;
+                            intercept = true;
+                        } else {
+                            intercept = false;
                         }
                     } else if (dy < 0) {//向上滑动
                         if (!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
-                            intercept=true;
+                            intercept = true;
                         } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
-                            intercept=true;
-                        }else {
-                            JLog.i("-------------");
-                            intercept=false;
+                            intercept = true;
+                        } else {
+                            intercept = false;
                         }
                     } else {
-                        intercept=false;
+                        intercept = false;
                     }
+                }
+                if (mIsBeingDragged && intercept) {
+                    mInitialMotionY = y;
                 }
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 mIsBeingDragged = false;
-                lastDy=0;
-                intercept=false;
+                lastDy = 0;
+                intercept = false;
                 break;
         }
         return intercept;
@@ -392,30 +408,31 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                 if (mIsBeingDragged) {
                     final float dy = (y - mInitialMotionY);//此处为了和nestScroll保持一致，取负值
                     mInitialMotionY = y;
-                    JLog.i(dy+">>>>"+canChildScrollUp(-1)+">>"+mTotalUnconsumed+">>"+topRefrush.getMinValueToScrollList());
                     if (dy > 0) {//向下滑动
                         if (!canChildScrollUp(-1) && topRefrush != null) {//此时控件无法向下滑动
                             topRefrushMove(dy);
-                            intercept=true;
+                            intercept = true;
                         } else if (bottomRefrush != null && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList()) {
                             //此时如果底部控件还留有外部空隙，此时需要先将底部控件滑动隐藏，此时也打断
                             bottomRefrushMove(-dy);
-                            intercept=true;
-                        }else {
-                            intercept=false;
+                            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+                            intercept = true;
+                        } else {
+                            intercept = false;
                         }
                     } else if (dy < 0) {//向上滑动
                         if (!canChildScrollUp(1)) {//此时控件已经到达底部，无法向上滑动
                             bottomRefrushMove(-dy);
-                            intercept=true;
+                            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+                            intercept = true;
                         } else if (topRefrush != null && mTotalUnconsumed > topRefrush.getMinValueToScrollList()) {
                             topRefrushMove(dy);
-                            intercept=true;
-                        }else {
-                            intercept=false;
+                            intercept = true;
+                        } else {
+                            intercept = false;
                         }
                     } else {
-                        intercept=false;
+                        intercept = false;
                     }
                 }
                 break;
@@ -423,7 +440,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             case MotionEvent.ACTION_UP: {
                 if (mIsBeingDragged) {
                     mIsBeingDragged = false;
-                    intercept=false;
+                    intercept = false;
                     if (isTop) {
                         finishSpinner(mTotalUnconsumed);
                     } else {
@@ -433,7 +450,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
                 return false;
             }
             case MotionEvent.ACTION_CANCEL:
-                intercept=false;
+                intercept = false;
                 return false;
         }
 
@@ -446,13 +463,16 @@ public class RefrushLayoutView extends BaseRefrushLayout {
      * @param dy
      */
     private void topRefrushMove(float dy) {
+        if (!isTop) {
+            isTop = true;
+        }
         if (lastDy == 0) {
             lastDy = dy;
         }
         if (lastDy * dy < 0) {
             dy += lastDy;
         }
-        if (topRefrush!=null&&dy != 0 && lastDy * dy > 0) {
+        if (topRefrush != null && dy != 0 && lastDy * dy > 0) {
 
             mTotalUnconsumed += (dy);
             mTotalUnconsumed = mTotalUnconsumed > topRefrush.getTotalDragDistance() ? topRefrush.getTotalDragDistance() :
@@ -460,28 +480,33 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             topRefrush.moveSpinner(mTotalUnconsumed);
         }
         lastDy = dy;
-    }  /**
+    }
+
+    /**
      * 移动头部数据
      *
      * @param dy
      */
     private void bottomRefrushMove(float dy) {
+        if (isTop) {
+            isTop = false;
+        }
         if (lastDy == 0) {
             lastDy = dy;
         }
         if (lastDy * dy < 0) {
             dy += lastDy;
         }
-        if (bottomRefrush!=null&&dy != 0 && lastDy * dy > 0) {
-
+        if (bottomRefrush != null && dy != 0 && lastDy * dy > 0) {
             mBottomTotalUnconsumed += (dy);
             mBottomTotalUnconsumed = mBottomTotalUnconsumed > bottomRefrush.getTotalDragDistance() ? bottomRefrush.getTotalDragDistance() :
                     (mBottomTotalUnconsumed < bottomRefrush.getMinValueToScrollList() ? bottomRefrush.getMinValueToScrollList() : mBottomTotalUnconsumed);
 
-            if (mBottomTotalUnconsumed>0){
-                mTarget.setTranslationY(-mBottomTotalUnconsumed);
-            }
-            bottomRefrush.moveSpinner(mBottomTotalUnconsumed);
+
+//            mTarget.setTranslationY(-bottomRefrush.getCurrentValue());
+
+            JLog.i(mTarget.getMeasuredHeight() + ">>>" + mTarget.getTranslationY() + ">>>" + bottomRefrush.getCurrentValue());
+
 
         }
         lastDy = dy;
@@ -489,8 +514,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
 
     private void startDragging(float y) {
         final float yDiff = y - mInitialDownY;
-
-
         if (Math.abs(yDiff) > mTouchSlop && !mIsBeingDragged) {
             if (yDiff > 0) {
                 mInitialMotionY = mInitialDownY + mTouchSlop;
@@ -500,8 +523,6 @@ public class RefrushLayoutView extends BaseRefrushLayout {
             mIsBeingDragged = true;
         }
     }
-
-
 
 
     private int mTotalUnconsumed;
@@ -518,48 +539,7 @@ public class RefrushLayoutView extends BaseRefrushLayout {
     }
 
     boolean isTop = true;
-
-    /**
-     * 用来判断当前滑动处于的状态，1 表示头布局拉伸转台 2 表示脚布局拉伸状态 0 无状态
-     *
-     * @param dy
-     * @return
-     */
-    private int topCanScroll(float dy) {
-
-        if (topRefrush != null && ((dy < 0 && !canChildScrollUp(-1))//如果是下拉操作，消耗掉所有的数据
-                || (dy > 0 && mTotalUnconsumed > topRefrush.getMinValueToScrollList()))) {
-            return 1;
-        } else if (bottomRefrush != null && ((dy > 0 && !canChildScrollUp(1))//如果是上滑操作，消耗掉所有的数据
-                || (dy < 0 && mBottomTotalUnconsumed > bottomRefrush.getMinValueToScrollList())//如果是想上滑动
-        )) {
-            return 2;
-        } else {
-            return 0;
-        }
-
-    }
-
-
     private float lastDy;
-
-    private int caculeUnConsum(float dy, int caculeNum, int maxValue, int minValue) {
-        if (lastDy == 0) {
-            lastDy = dy;
-        }
-        if (lastDy * dy < 0) {
-            dy += lastDy;
-        }
-        if (dy != 0
-                && lastDy * dy > 0
-                ) {
-
-            caculeNum -= (dy);
-            caculeNum = caculeNum > maxValue ? maxValue : (caculeNum < minValue ? minValue : caculeNum);
-        }
-        lastDy = dy;
-        return caculeNum;
-    }
 
 
 }

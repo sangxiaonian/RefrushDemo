@@ -21,7 +21,6 @@
             android:layout_marginBottom="60dp" />
 
 
-
     </sang.com.easyrefrush.RefrushLayoutView>
 
 
@@ -32,4 +31,5 @@
         android:textSize="30dp"
         android:gravity="center"
         android:layout_height="match_parent" />
+
 </LinearLayout>

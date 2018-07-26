@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         refrushLayoutView.finishRefrush();
                     }
-                }, 1500);
+                }, 5000);
             }
         });
 
