@@ -10,7 +10,6 @@ import android.widget.ListView;
 
 import sang.com.easyrefrush.refrush.BaseRefrushLayout;
 import sang.com.easyrefrush.refrush.EnumCollections;
-import sang.com.easyrefrush.refrush.view.base.BasePickView;
 
 
 /**
@@ -57,7 +56,7 @@ public class NestedScrollRefrushLayoutView extends BaseRefrushLayout {
     }
 
 
- /**
+    /**
      * 唯一的子控件是否可以继续滑动
      *
      * @param direction -1 ，可以向上滑动 1 向下滑动
@@ -182,6 +181,7 @@ public class NestedScrollRefrushLayoutView extends BaseRefrushLayout {
     private boolean mNestedScrollInProgress;
     private int mTotalUnconsumed;
     private int mBottomTotalUnconsumed;
+
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         return isEnabled() && !mReturningToStart && !mRefreshing

@@ -81,6 +81,16 @@ public class ViewHelper implements IRefrushView {
         return mCurrentTargetOffsetTop;
     }
 
+    /**
+     * 手指触摸屏幕，触发down事件
+     *
+     * @param overscrollTop 手指滑动的总距离
+     */
+    @Override
+    public void startSpinner(float overscrollTop) {
+
+    }
+
 
     /**
      * 根据传入手指滑动总距离进行处理，返回合适的值
@@ -135,6 +145,16 @@ public class ViewHelper implements IRefrushView {
      */
     @Override
     public void onFinishSpinner(float overscrollTop) {
+    }
+
+    /**
+     * 手指离开屏幕，触发Up事件
+     *
+     * @param overscrollTop
+     */
+    @Override
+    public void finishSpinner(float overscrollTop) {
+
     }
 
     @Override

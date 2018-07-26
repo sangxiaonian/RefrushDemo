@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private void initView() {
         recyclerView = findViewById(R.id.rv);
 
-        recyclerView.setNestedScrollingEnabled(false);
+        recyclerView.setNestedScrollingEnabled(true);
 
         refrushLayoutView = findViewById(R.id.xrefresh);
         View inflate = LayoutInflater.from(this).inflate(R.layout.toolbar_gradient, refrushLayoutView, false);
